@@ -77,7 +77,7 @@ enum class DocumentStatus {
 
 class SearchServer {
 public:
-    SearchServer() = default;
+    SearchServer() = default; // Этот конструктор был нужен для удобства тестирования.
 
     template<typename StringContainer>
     explicit SearchServer(const StringContainer& stop_words)
