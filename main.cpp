@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 #include <optional>
+#include <numeric>
 
 using namespace std;
 
@@ -82,10 +83,10 @@ public:
     template<typename StringContainer>
     explicit SearchServer(const StringContainer& stop_words)
             : stop_words_(MakeUniqueNonEmptyStrings(stop_words)) {
-        for (const auto& word: stop_words_) {
-            if (!IsValidWord(word)) {
-                throw invalid_argument("Forbidden characters in stop-words."s);
-            }
+        if (!all_of(stop_words_.begin(), stop_words_.end(), [this](const auto& word) {
+            return IsValidWord(word);
+        })) {
+            throw invalid_argument("Forbidden characters in stop-words."s);
         }
     }
 
@@ -175,6 +176,7 @@ private:
         int rating;
         DocumentStatus status;
     };
+
     const set<string> stop_words_;
     map<string, map<int, double>> word_to_document_freqs_;
     map<int, DocumentData> documents_;
@@ -208,11 +210,7 @@ private:
         if (ratings.empty()) {
             return 0;
         }
-        int rating_sum = 0;
-        for (const int rating: ratings) {
-            rating_sum += rating;
-        }
-        return rating_sum / static_cast<int>(ratings.size());
+        return accumulate(ratings.begin(), ratings.end(), 0) / static_cast<int>(ratings.size());
     }
 
     struct QueryWord {
@@ -232,9 +230,11 @@ private:
         }
         if (text.empty()) {
             throw invalid_argument("Standalone '-' in request."s);
-        } else if (text[0] == '-') {
+        }
+        if (text[0] == '-') {
             throw invalid_argument("'--' in request."s);
-        } else if (!IsValidWord(text)) {
+        }
+        if (!IsValidWord(text)) {
             throw invalid_argument("Forbidden characters in request."s);
         }
         return QueryWord{text, is_minus, IsStopWord(text)};
