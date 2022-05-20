@@ -304,7 +304,7 @@ public:
     explicit IteratorRange(It begin, It end, size_t size) : begin_(begin), end_(end), size_(size) {
     }
 
-    It begin() const {
+    auto begin() const {
         return begin_;
     }
 
@@ -312,7 +312,7 @@ public:
         return size_;
     }
 
-    It end() const {
+    auto end() const {
         return end_;
     }
 
