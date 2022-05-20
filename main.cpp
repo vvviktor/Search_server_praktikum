@@ -298,6 +298,82 @@ private:
     }
 };
 
+template<typename It>
+class IteratorRange {
+public:
+    explicit IteratorRange(It begin, It end, size_t size) : begin_(begin), end_(end), size_(size) {
+    }
+
+    It begin() const {
+        return begin_;
+    }
+
+    size_t size() const {
+        return size_;
+    }
+
+    It end() const {
+        return end_;
+    }
+
+private:
+    It begin_;
+    It end_;
+    size_t size_;
+};
+
+template<typename It>
+class Paginator {
+public:
+    explicit Paginator(It begin, It end, size_t size) {
+        for (auto it = begin; it != end;) {
+            if (distance(it, end) >= size) {
+                It temp = it;
+                advance(temp, size);
+                pages_.push_back(IteratorRange(it, temp, size));
+                advance(it, size);
+            } else {
+                It temp = it;
+                advance(temp, distance(it, end));
+                pages_.push_back(IteratorRange(it, temp, distance(it, end)));
+                break;
+            }
+        }
+    }
+
+    auto begin() const {
+        return pages_.begin();
+    }
+
+    auto end() const {
+        return pages_.end();
+    }
+
+private:
+    vector<IteratorRange<It>> pages_;
+};
+
+ostream& operator<<(ostream& out, const Document& document) {
+    out << "{ "s
+        << "document_id = "s << document.id << ", "s
+        << "relevance = "s << document.relevance << ", "s
+        << "rating = "s << document.rating << " }"s;
+    return out;
+}
+
+template<typename It>
+ostream& operator<<(ostream& out, const IteratorRange<It> page) {
+    for (auto it = page.begin(); it != page.end(); ++it) {
+        out << *it;
+    }
+    return out;
+}
+
+template<typename Container>
+auto Paginate(const Container& c, size_t page_size) {
+    return Paginator(c.begin(), c.end(), page_size);
+}
+
 #define ASSERT_EQUAL(a, b) AssertEqualImpl((a), (b), #a, #b, __FILE__, __FUNCTION__, __LINE__, ""s)
 #define ASSERT_EQUAL_HINT(a, b, hint) AssertEqualImpl((a), (b), #a, #b, __FILE__, __FUNCTION__, __LINE__, (hint))
 #define ASSERT(expr) AssertImpl(!!(expr), #expr, __FILE__, __FUNCTION__, __LINE__, ""s)
@@ -535,4 +611,21 @@ void PrintDocument(const Document& document) {
 
 int main() {
     TestSearchServer();
+    SearchServer search_server("and with"s);
+
+    search_server.AddDocument(1, "funny pet and nasty rat"s, DocumentStatus::ACTUAL, {7, 2, 7});
+    search_server.AddDocument(2, "funny pet with curly hair"s, DocumentStatus::ACTUAL, {1, 2, 3});
+    search_server.AddDocument(3, "big cat nasty hair"s, DocumentStatus::ACTUAL, {1, 2, 8});
+    search_server.AddDocument(4, "big dog cat Vladislav"s, DocumentStatus::ACTUAL, {1, 3, 2});
+    search_server.AddDocument(5, "big dog hamster Borya"s, DocumentStatus::ACTUAL, {1, 1, 1});
+
+    const auto search_results = search_server.FindTopDocuments("curly dog"s);
+    int page_size = 2;
+    const auto pages = Paginate(search_results, page_size);
+
+    // Выводим найденные документы по страницам
+    for (auto page = pages.begin(); page != pages.end(); ++page) {
+        cout << *page << endl;
+        cout << "Page break"s << endl;
+    }
 }
