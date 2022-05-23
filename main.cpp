@@ -328,7 +328,7 @@ public:
             if (distance(page_begin_it, end) >= size) {
                 It page_end_it = next(page_begin_it, size);
                 pages_.push_back(IteratorRange(page_begin_it, page_end_it, size));
-                advance(page_begin_it, size);
+                page_begin_it = page_end_it;
             } else {
                 It page_end_it = next(page_begin_it, distance(page_begin_it, end));
                 pages_.push_back(IteratorRange(page_begin_it, page_end_it, distance(page_begin_it, end)));
