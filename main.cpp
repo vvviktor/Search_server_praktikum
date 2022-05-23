@@ -4,9 +4,7 @@
 #include <map>
 #include <set>
 #include <string>
-#include <utility>
 #include <vector>
-#include <optional>
 #include <numeric>
 
 using namespace std;
@@ -326,16 +324,14 @@ template<typename It>
 class Paginator {
 public:
     explicit Paginator(It begin, It end, size_t size) {
-        for (auto it = begin; it != end;) {
-            if (distance(it, end) >= size) {
-                It temp = it;
-                advance(temp, size);
-                pages_.push_back(IteratorRange(it, temp, size));
-                advance(it, size);
+        for (auto page_begin_it = begin; page_begin_it != end;) {
+            if (distance(page_begin_it, end) >= size) {
+                It page_end_it = next(page_begin_it, size);
+                pages_.push_back(IteratorRange(page_begin_it, page_end_it, size));
+                advance(page_begin_it, size);
             } else {
-                It temp = it;
-                advance(temp, distance(it, end));
-                pages_.push_back(IteratorRange(it, temp, distance(it, end)));
+                It page_end_it = next(page_begin_it, distance(page_begin_it, end));
+                pages_.push_back(IteratorRange(page_begin_it, page_end_it, distance(page_begin_it, end)));
                 break;
             }
         }
