@@ -1,6 +1,5 @@
 #include "search_server.h"
 #include <cmath>
-#include <stdexcept>
 #include <numeric>
 
 using namespace std;
