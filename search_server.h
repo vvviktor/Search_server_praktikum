@@ -84,7 +84,7 @@ SearchServer::SearchServer(const StringContainer& stop_words)
     if (!std::all_of(stop_words_.begin(), stop_words_.end(), [](const auto& word) {
         return IsValidWord(word);
     })) {
-        using namespace std::string_literals;
+        using namespace std::literals::string_literals;
         throw std::invalid_argument("Forbidden characters in stop-words."s);
     }
 }
