@@ -24,7 +24,12 @@ int main() {
         request_queue.AddFindRequest("empty request"s);
     }
     // все еще 1439 запросов с нулевым результатом
-    request_queue.AddFindRequest("curly dog"s);
+    const vector<Document> result = request_queue.AddFindRequest("curly dog"s);
+    const auto pages = Paginate(result, 2);
+    for (auto i = pages.begin(); i != pages.end(); ++i) {
+        cout << *i << endl << "========================================================"s
+             << "=================================================="s << endl;
+    }
     // новые сутки, первый запрос удален, 1438 запросов с нулевым результатом
     request_queue.AddFindRequest("big collar"s);
     // первый запрос удален, 1437 запросов с нулевым результатом
