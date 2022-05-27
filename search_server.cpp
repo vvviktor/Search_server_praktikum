@@ -43,8 +43,8 @@ int SearchServer::GetDocumentId(int index) const {
     return document_ids_.at(index);
 }
 
-tuple<vector<string>, DocumentStatus>
-SearchServer::MatchDocument(const string& raw_query, int document_id) const {
+tuple<vector<string>, DocumentStatus> SearchServer::MatchDocument(const string& raw_query, int document_id) const {
+    LOG_DURATION_STREAM("Operation time"s, cout);
     const Query query = ParseQuery(raw_query);
     vector<string> matched_words;
     for (const string& word: query.plus_words) {

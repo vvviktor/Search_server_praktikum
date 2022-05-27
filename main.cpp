@@ -9,7 +9,7 @@
 using namespace std;
 
 int main() {
-    TestSearchServer();
+    //TestSearchServer();
     SearchServer search_server("and in at"s);
     RequestQueue request_queue(search_server);
 
@@ -20,9 +20,9 @@ int main() {
     search_server.AddDocument(5, "big dog sparrow Vasiliy"s, DocumentStatus::ACTUAL, {1, 1, 1});
 
     // 1439 запросов с нулевым результатом
-    for (int i = 0; i < 1439; ++i) {
+    /*for (int i = 0; i < 1439; ++i) {
         request_queue.AddFindRequest("empty request"s);
-    }
+    }*/
     // все еще 1439 запросов с нулевым результатом
     const vector<Document> result = request_queue.AddFindRequest("curly dog"s);
     // новые сутки, первый запрос удален, 1438 запросов с нулевым результатом
