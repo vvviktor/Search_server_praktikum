@@ -25,13 +25,18 @@ int main() {
     }
     // все еще 1439 запросов с нулевым результатом
     const vector<Document> result = request_queue.AddFindRequest("curly dog"s);
+    // новые сутки, первый запрос удален, 1438 запросов с нулевым результатом
+    const vector<Document> result2 = request_queue.AddFindRequest("big collar"s);
     const auto pages = Paginate(result, 2);
+    const auto pages2 = Paginate(result2, 2);
     for (auto i = pages.begin(); i != pages.end(); ++i) {
         cout << *i << endl << "========================================================"s
              << "=================================================="s << endl;
     }
-    // новые сутки, первый запрос удален, 1438 запросов с нулевым результатом
-    request_queue.AddFindRequest("big collar"s);
+    for (auto i = pages2.begin(); i != pages2.end(); ++i) {
+        cout << *i << endl << "========================================================"s
+             << "=================================================="s << endl;
+    }
     // первый запрос удален, 1437 запросов с нулевым результатом
     request_queue.AddFindRequest("sparrow"s);
     cout << "Total empty requests: "s << request_queue.GetNoResultRequests() << endl;
