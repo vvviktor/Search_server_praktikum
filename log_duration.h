@@ -16,7 +16,11 @@ public:
     // с помощью using для удобства
     using Clock = std::chrono::steady_clock;
 
-    explicit LogDuration(const std::string& process_name, std::ostream& out = std::cerr) : process_name_(process_name),
+    explicit LogDuration(const std::string& process_name) : process_name_(process_name), out_(std::cerr) {
+
+    }
+
+    explicit LogDuration(const std::string& process_name, std::ostream& out) : process_name_(process_name),
                                                                                            out_(out) {
     }
 
