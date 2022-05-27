@@ -6,6 +6,7 @@
 #include <map>
 #include <algorithm>
 #include <stdexcept>
+#include <cmath>
 #include "document.h"
 #include "string_processing.h"
 
