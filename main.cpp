@@ -27,8 +27,11 @@ int main() {
     const vector<Document> result = request_queue.AddFindRequest("curly dog"s);
     // новые сутки, первый запрос удален, 1438 запросов с нулевым результатом
     const vector<Document> result2 = request_queue.AddFindRequest("big collar"s);
+    // первый запрос удален, 1437 запросов с нулевым результатом
+    const vector<Document> result3 = request_queue.AddFindRequest("sparrow"s);
     const auto pages = Paginate(result, 2);
     const auto pages2 = Paginate(result2, 2);
+    const auto pages3 = Paginate(result3, 2);
     for (auto i = pages.begin(); i != pages.end(); ++i) {
         cout << *i << endl << "========================================================"s
              << "=================================================="s << endl;
@@ -37,8 +40,10 @@ int main() {
         cout << *i << endl << "========================================================"s
              << "=================================================="s << endl;
     }
-    // первый запрос удален, 1437 запросов с нулевым результатом
-    request_queue.AddFindRequest("sparrow"s);
+    for (auto i = pages3.begin(); i != pages3.end(); ++i) {
+        cout << *i << endl << "========================================================"s
+             << "=================================================="s << endl;
+    }
     cout << "Total empty requests: "s << request_queue.GetNoResultRequests() << endl;
     return 0;
 }
