@@ -19,9 +19,8 @@ void RunTestImpl(const T& func, const std::string& func_str) {
 }
 
 template<typename T, typename U>
-void
-AssertEqualImpl(const T& t, const U& u, const std::string& t_str, const std::string& u_str, const std::string& file,
-                const std::string& func, unsigned line, const std::string& hint) {
+void AssertEqualImpl(const T& t, const U& u, const std::string& t_str, const std::string& u_str,
+                     const std::string& file, const std::string& func, unsigned line, const std::string& hint) {
     if (t != u) {
         using namespace std::literals::string_literals;
         std::cerr << std::boolalpha;
@@ -36,6 +35,5 @@ AssertEqualImpl(const T& t, const U& u, const std::string& t_str, const std::str
     }
 }
 
-void
-AssertImpl(bool value, const std::string& expr_str, const std::string& file, const std::string& func, unsigned line,
-           const std::string& hint);
+void AssertImpl(bool value, const std::string& expr_str, const std::string& file, const std::string& func,
+                unsigned line, const std::string& hint);

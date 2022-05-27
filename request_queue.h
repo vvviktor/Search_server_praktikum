@@ -41,6 +41,6 @@ private:
 };
 
 template<typename DocumentPredicate>
-std::vector<Document>RequestQueue::AddFindRequest(const std::string& raw_query, DocumentPredicate document_predicate) {
+std::vector<Document> RequestQueue::AddFindRequest(const std::string& raw_query, DocumentPredicate document_predicate) {
     return QueryProcess(raw_query, server_.FindTopDocuments(raw_query, document_predicate));
 }
