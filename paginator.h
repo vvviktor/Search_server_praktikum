@@ -4,13 +4,13 @@
 #include <iostream>
 #include <cassert>
 
-template<typename It>
+template<typename Iterator>
 class IteratorRange {
 public:
-    explicit IteratorRange(It begin, It end, size_t size) : begin_(begin), end_(end), size_(size) {
+    explicit IteratorRange(Iterator begin, Iterator end, size_t size) : begin_(begin), end_(end), size_(size) {
     }
 
-    It begin() const {
+    Iterator begin() const {
         return begin_;
     }
 
@@ -18,28 +18,28 @@ public:
         return size_;
     }
 
-    It end() const {
+    Iterator end() const {
         return end_;
     }
 
 private:
-    It begin_;
-    It end_;
+    Iterator begin_;
+    Iterator end_;
     size_t size_;
 };
 
-template<typename It>
+template<typename Iterator>
 class Paginator {
 public:
-    explicit Paginator(It begin, It end, size_t size) {
+    explicit Paginator(Iterator begin, Iterator end, size_t size) {
         assert(end >= begin && size > 0);
         for (auto page_begin_it = begin; page_begin_it != end;) {
             if (distance(page_begin_it, end) >= size) {
-                It page_end_it = next(page_begin_it, size);
+                Iterator page_end_it = next(page_begin_it, size);
                 pages_.push_back(IteratorRange(page_begin_it, page_end_it, size));
                 page_begin_it = page_end_it;
             } else {
-                It page_end_it = next(page_begin_it, distance(page_begin_it, end));
+                Iterator page_end_it = next(page_begin_it, distance(page_begin_it, end));
                 pages_.push_back(IteratorRange(page_begin_it, page_end_it, distance(page_begin_it, end)));
                 break;
             }
@@ -55,12 +55,12 @@ public:
     }
 
 private:
-    std::vector<IteratorRange<It>> pages_;
+    std::vector<IteratorRange<Iterator>> pages_;
 };
 
-template<typename It>
-std::ostream& operator<<(std::ostream& out, const IteratorRange<It> page) {
-    for (auto it = page.begin(); it != page.end(); ++it) {
+template<typename Iterator>
+std::ostream& operator<<(std::ostream& out, const IteratorRange<Iterator> page) {
+    for (Iterator it = page.begin(); it != page.end(); ++it) {
         out << *it;
     }
     return out;
