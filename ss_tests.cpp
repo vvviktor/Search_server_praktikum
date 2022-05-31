@@ -11,14 +11,14 @@
 using namespace std;
 
 void TestSearchServer() {
-    /*RUN_TEST(TestSearchServerConstructor);
+    RUN_TEST(TestSearchServerConstructor);
     RUN_TEST(TestAddInvalidDocument);
     RUN_TEST(TestInvalidQuery);
-    RUN_TEST(TestMatchDocumentInvalidQuery);*/
+    RUN_TEST(TestMatchDocumentInvalidQuery);
     RUN_TEST(TestIterators);
     RUN_TEST(TestGetWordFrequencies);
     RUN_TEST(TestRemoveDocument);
-    /*RUN_TEST(TestExcludeStopWordsFromAddedDocumentContent);
+    RUN_TEST(TestExcludeStopWordsFromAddedDocumentContent);
     RUN_TEST(TestAddDocument);
     RUN_TEST(TestMinusWords);
     RUN_TEST(TestMatchDocument);
@@ -26,7 +26,7 @@ void TestSearchServer() {
     RUN_TEST(TestCalculateRating);
     RUN_TEST(TestPredicate);
     RUN_TEST(TestDocumentStatusFilter);
-    RUN_TEST(TestRelevanceCalculation);*/
+    RUN_TEST(TestRelevanceCalculation);
 }
 
 void TestSearchServerConstructor() {
