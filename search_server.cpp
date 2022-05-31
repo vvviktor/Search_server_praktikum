@@ -67,7 +67,7 @@ const map<string, double>& SearchServer::GetWordFrequencies(int document_id) con
 
 
 int SearchServer::GetDocumentCount() const {
-    return documents_.size();
+    return static_cast<int>(documents_.size());
 }
 
 tuple<vector<string>, DocumentStatus> SearchServer::MatchDocument(const string& raw_query, int document_id) const {
