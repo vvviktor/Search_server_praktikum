@@ -1,5 +1,7 @@
 #pragma once
 
+void TestSearchServer();
+
 void TestSearchServerConstructor();
 
 void TestAddInvalidDocument();
@@ -8,9 +10,11 @@ void TestInvalidQuery();
 
 void TestMatchDocumentInvalidQuery();
 
-void TestGetDocumentId();
+void TestIterators();
 
-void TestSearchServer();
+void TestGetWordFrequencies();
+
+void TestRemoveDocument();
 
 void TestExcludeStopWordsFromAddedDocumentContent();
 

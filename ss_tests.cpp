@@ -10,6 +10,25 @@
 
 using namespace std;
 
+void TestSearchServer() {
+    /*RUN_TEST(TestSearchServerConstructor);
+    RUN_TEST(TestAddInvalidDocument);
+    RUN_TEST(TestInvalidQuery);
+    RUN_TEST(TestMatchDocumentInvalidQuery);*/
+    RUN_TEST(TestIterators);
+    RUN_TEST(TestGetWordFrequencies);
+    RUN_TEST(TestRemoveDocument);
+    /*RUN_TEST(TestExcludeStopWordsFromAddedDocumentContent);
+    RUN_TEST(TestAddDocument);
+    RUN_TEST(TestMinusWords);
+    RUN_TEST(TestMatchDocument);
+    RUN_TEST(TestRelevanceSorting);
+    RUN_TEST(TestCalculateRating);
+    RUN_TEST(TestPredicate);
+    RUN_TEST(TestDocumentStatusFilter);
+    RUN_TEST(TestRelevanceCalculation);*/
+}
+
 void TestSearchServerConstructor() {
     try {
         const vector<string> stop_words = {"\12n"s, "\26H\13"s, "G\7F"s};
@@ -154,7 +173,7 @@ void TestMatchDocumentInvalidQuery() {
     }
 }
 
-void TestGetDocumentId() {
+void TestIterators() {
     const int doc0_id = 42;
     const string content0 = "young cat in the city"s;
     const vector<int> ratings0 = {1, 1, 1};
@@ -171,37 +190,73 @@ void TestGetDocumentId() {
         server.AddDocument(doc1_id, content1, DocumentStatus::ACTUAL, ratings1);
         server.AddDocument(doc2_id, content2, DocumentStatus::ACTUAL, ratings2);
         ASSERT_EQUAL(server.GetDocumentCount(), 3);
-        ASSERT_EQUAL(server.GetDocumentId(2), 33);
-        ASSERT_EQUAL(server.GetDocumentId(1), 24);
-        ASSERT_EQUAL(server.GetDocumentId(0), 42);
-        try {
-            server.GetDocumentId(-5);
-        } catch (const out_of_range& e) {
-            cerr << "GetDocumentId error: Request is out of range."s << endl;
+        set<int> got_ids;
+        for (const int id: server) {
+            got_ids.insert(id);
         }
-        try {
-            server.GetDocumentId(6);
-        } catch (const out_of_range& e) {
-            cerr << "GetDocumentId error: Request is out of range."s << endl;
-        }
+        ASSERT_EQUAL_HINT(got_ids.size(), 3, "Invalid id iterators returned by begin() or end() methods."s);
+        ASSERT_HINT(got_ids.count(doc0_id), "Wrong id value returned. Check begin() and end() iterators validity."s);
+        ASSERT_HINT(got_ids.count(doc1_id), "Wrong id value returned. Check begin() and end() iterators validity."s);
+        ASSERT_HINT(got_ids.count(doc2_id), "Wrong id value returned. Check begin() and end() iterators validity."s);
     }
 }
 
-void TestSearchServer() {
-    RUN_TEST(TestSearchServerConstructor);
-    RUN_TEST(TestAddInvalidDocument);
-    RUN_TEST(TestInvalidQuery);
-    RUN_TEST(TestMatchDocumentInvalidQuery);
-    RUN_TEST(TestGetDocumentId);
-    RUN_TEST(TestExcludeStopWordsFromAddedDocumentContent);
-    RUN_TEST(TestAddDocument);
-    RUN_TEST(TestMinusWords);
-    RUN_TEST(TestMatchDocument);
-    RUN_TEST(TestRelevanceSorting);
-    RUN_TEST(TestCalculateRating);
-    RUN_TEST(TestPredicate);
-    RUN_TEST(TestDocumentStatusFilter);
-    RUN_TEST(TestRelevanceCalculation);
+void TestGetWordFrequencies() {
+    const int doc0_id = 42;
+    const string content0 = "young cat in the city"s;
+    const vector<int> ratings0 = {1, 1, 1};
+    {
+        SearchServer server("in the"s);
+        ASSERT_EQUAL(server.GetDocumentCount(), 0);
+        const map<string, double> got_word_freqs = server.GetWordFrequencies(doc0_id);
+        ASSERT_HINT(got_word_freqs.empty(),
+                    "Non-empty result returned for non-existing document. Check GetWordFrequencies method."s);
+        server.AddDocument(doc0_id, content0, DocumentStatus::ACTUAL, ratings0);
+        ASSERT_EQUAL(server.GetDocumentCount(), 1);
+        const map<string, double> got_word_freqs0 = server.GetWordFrequencies(doc0_id);
+        ASSERT_HINT(!got_word_freqs0.empty(),
+                    "Empty result returned for existing document. Check GetWordFrequencies method."s);
+        ASSERT_HINT(!got_word_freqs0.count("the"s), "Stop words in result. ");
+        ASSERT_HINT(got_word_freqs0.count("young"s),
+                    "Invalid result - existing word missing. Check GetWordFrequencies method."s);
+        ASSERT_HINT(got_word_freqs0.count("cat"s),
+                    "Invalid result - existing word missing. Check GetWordFrequencies method."s);
+        ASSERT_HINT(got_word_freqs0.count("city"s),
+                    "Invalid result - existing word missing. Check GetWordFrequencies method."s);
+    }
+}
+
+void TestRemoveDocument() {
+    const int doc0_id = 42;
+    const string content0 = "young cat in the city"s;
+    const vector<int> ratings0 = {1, 1, 1};
+    const int invalid_id = 21;
+    {
+        SearchServer server("in the"s);
+        ASSERT_EQUAL(server.GetDocumentCount(), 0);
+        server.AddDocument(doc0_id, content0, DocumentStatus::ACTUAL, ratings0);
+        ASSERT_EQUAL(server.GetDocumentCount(), 1);
+        server.RemoveDocument(doc0_id);
+        ASSERT_EQUAL_HINT(server.GetDocumentCount(), 0,
+                          "Failed to remove document. documents_ not empty. Check RemoveDocument method."s);
+        ASSERT_EQUAL_HINT(distance(server.begin(), server.end()), 0,
+                          "Failed to remove document. document_ids_ not empty. Check RemoveDocument method."s);
+        const map<string, double> got_word_freqs0 = server.GetWordFrequencies(doc0_id);
+        ASSERT_HINT(got_word_freqs0.empty(),
+                    "Failed to remove document. GetWordFrequencies() returned non-empty result. Check RemoveDocument method.");
+        const auto found_docs = server.FindTopDocuments("young city cat"s);
+        ASSERT_HINT(found_docs.empty(),
+                    "Failed to remove document. Check document ID deletion from word_to_document_freqs_ in RemoveDocument method."s);
+    }
+    try {
+        SearchServer server("in the"s);
+        ASSERT_EQUAL(server.GetDocumentCount(), 0);
+        server.AddDocument(doc0_id, content0, DocumentStatus::ACTUAL, ratings0);
+        ASSERT_EQUAL(server.GetDocumentCount(), 1);
+        server.RemoveDocument(invalid_id);
+    } catch (const invalid_argument& e) {
+        cerr << "RemoveDocument error: "s << e.what() << endl;
+    }
 }
 
 void TestExcludeStopWordsFromAddedDocumentContent() {

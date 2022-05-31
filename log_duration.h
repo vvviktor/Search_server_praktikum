@@ -21,7 +21,7 @@ public:
     }
 
     explicit LogDuration(const std::string& process_name, std::ostream& out) : process_name_(process_name),
-                                                                                           out_(out) {
+                                                                               out_(out) {
     }
 
     ~LogDuration() {
