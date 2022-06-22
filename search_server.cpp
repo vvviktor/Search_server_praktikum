@@ -71,6 +71,11 @@ int SearchServer::GetDocumentCount() const {
 }
 
 tuple<vector<string>, DocumentStatus> SearchServer::MatchDocument(const string& raw_query, int document_id) const {
+
+    if (!document_ids_.count(document_id)) {
+        throw out_of_range("Document ID is out of range."s);
+    }
+
     const Query query = ParseQuery(raw_query);
     vector<string> matched_words;
     for (const string& word: query.plus_words) {
@@ -162,6 +167,21 @@ SearchServer::Query SearchServer::ParseQuery(const string& text) const {
                 query.minus_words.insert(query_word.data);
             } else {
                 query.plus_words.insert(query_word.data);
+            }
+        }
+    }
+    return query;
+}
+
+SearchServer::QueryPar SearchServer::ParseQueryPar(const std::string& text) const {
+    QueryPar query;
+    for (const string& word: SplitIntoWords(text)) {
+        const QueryWord query_word = ParseQueryWord(word);
+        if (!query_word.is_stop) {
+            if (query_word.is_minus) {
+                query.minus_words.emplace_back(query_word.data);
+            } else {
+                query.plus_words.emplace_back(query_word.data);
             }
         }
     }

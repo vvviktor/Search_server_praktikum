@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <stdexcept>
 #include <cmath>
+#include <iterator>
 #include <execution>
 #include "document.h"
 #include "string_processing.h"
@@ -27,10 +28,10 @@ public:
     void AddDocument(int document_id, const std::string& document, DocumentStatus status,
                      const std::vector<int>& ratings);
 
+    void RemoveDocument(int document_id);
+
     template<class ExecutionPolicy>
     void RemoveDocument(ExecutionPolicy&& policy, int document_id);
-
-    void RemoveDocument(int document_id);
 
     template<typename DocumentPredicate>
     std::vector<Document> FindTopDocuments(const std::string& raw_query, DocumentPredicate document_predicate) const;
@@ -41,11 +42,14 @@ public:
 
     const std::map<std::string, double>& GetWordFrequencies(int document_id) const;
 
-
     int GetDocumentCount() const;
 
     std::tuple<std::vector<std::string>, DocumentStatus>
     MatchDocument(const std::string& raw_query, int document_id) const;
+
+    template<class ExecutionPolicy>
+    std::tuple<std::vector<std::string>, DocumentStatus>
+    MatchDocument(ExecutionPolicy&& policy, const std::string& raw_query, int document_id) const;
 
     std::set<int>::const_iterator begin() const;
 
@@ -84,7 +88,14 @@ private:
         std::set<std::string> minus_words;
     };
 
+    struct QueryPar {
+        std::vector<std::string> plus_words;
+        std::vector<std::string> minus_words;
+    };
+
     Query ParseQuery(const std::string& text) const;
+
+    QueryPar ParseQueryPar(const std::string& text) const;
 
     double ComputeWordInverseDocumentFreq(const std::string& word) const;
 
@@ -148,6 +159,40 @@ void SearchServer::RemoveDocument(ExecutionPolicy&& policy, int document_id) {
     document_to_word_freqs_.erase(document_id);
     documents_.erase(document_id);
     document_ids_.erase(document_id);
+}
+
+template<class ExecutionPolicy>
+std::tuple<std::vector<std::string>, DocumentStatus>
+SearchServer::MatchDocument(ExecutionPolicy&& policy, const std::string& raw_query, int document_id) const {
+
+    if (!std::any_of(policy, document_ids_.begin(), document_ids_.end(),
+                     [document_id](const auto& elem) {
+                         return elem == document_id;
+                     })) {
+        using namespace std::literals::string_literals;
+        throw std::out_of_range("Document ID is out of range."s);
+    }
+
+    const QueryPar query = ParseQueryPar(raw_query);
+
+    if (std::any_of(policy, query.minus_words.begin(), query.minus_words.end(),
+                    [this, document_id](const std::string& word) {
+                        return document_to_word_freqs_.at(document_id).count(word);
+                    })) {
+        std::vector<std::string> matched_words;
+        return std::tuple{matched_words, documents_.at(document_id).status};
+    }
+
+    std::vector<std::string> matched_words(query.plus_words.size());
+
+    std::copy_if(policy, query.plus_words.begin(), query.plus_words.end(), matched_words.begin(),
+                 [this, document_id](const std::string& word) {
+                     return document_to_word_freqs_.at(document_id).count(word);
+                 });
+    std::sort(policy, matched_words.begin(), matched_words.end());
+    matched_words.erase(std::unique(policy, matched_words.begin(), matched_words.end()), matched_words.end());
+
+    return std::tuple{matched_words, documents_.at(document_id).status};
 }
 
 template<typename DocumentPredicate>
