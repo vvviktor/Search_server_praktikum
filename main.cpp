@@ -6,6 +6,7 @@
 #include <random>
 #include <string>
 #include <vector>
+#include <type_traits>
 
 #include "log_duration.h"
 

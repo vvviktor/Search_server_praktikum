@@ -9,6 +9,8 @@
 #include <cmath>
 #include <iterator>
 #include <execution>
+#include <type_traits>
+#include <cassert>
 #include "document.h"
 #include "string_processing.h"
 #include "log_duration.h"
@@ -164,33 +166,37 @@ void SearchServer::RemoveDocument(ExecutionPolicy&& policy, int document_id) {
 template<class ExecutionPolicy>
 std::tuple<std::vector<std::string>, DocumentStatus>
 SearchServer::MatchDocument(ExecutionPolicy&& policy, const std::string& raw_query, int document_id) const {
+    assert(std::is_execution_policy_v<ExecutionPolicy>);
+    /*if constexpr(std::is_same_v<std::decay_t<ExecutionPolicy>,
+            std::execution::sequenced_policy>) {
+        return MatchDocument(raw_query, document_id);
+    }*/
 
-    if (!std::any_of(policy, document_ids_.begin(), document_ids_.end(),
-                     [document_id](const auto& elem) {
-                         return elem == document_id;
-                     })) {
+    if (!document_ids_.count(document_id)) {
         using namespace std::literals::string_literals;
         throw std::out_of_range("Document ID is out of range."s);
     }
 
     const QueryPar query = ParseQueryPar(raw_query);
+    std::vector<std::string> matched_words(query.plus_words.size());
 
-    if (std::any_of(policy, query.minus_words.begin(), query.minus_words.end(),
+    if (std::any_of(std::forward<ExecutionPolicy>(policy), query.minus_words.begin(), query.minus_words.end(),
                     [this, document_id](const std::string& word) {
                         return document_to_word_freqs_.at(document_id).count(word);
                     })) {
-        std::vector<std::string> matched_words;
+        matched_words.clear();
         return std::tuple{matched_words, documents_.at(document_id).status};
     }
 
-    std::vector<std::string> matched_words(query.plus_words.size());
-
-    std::copy_if(policy, query.plus_words.begin(), query.plus_words.end(), matched_words.begin(),
-                 [this, document_id](const std::string& word) {
-                     return document_to_word_freqs_.at(document_id).count(word);
-                 });
-    std::sort(policy, matched_words.begin(), matched_words.end());
-    matched_words.erase(std::unique(policy, matched_words.begin(), matched_words.end()), matched_words.end());
+    auto it = std::copy_if(std::forward<ExecutionPolicy>(policy), query.plus_words.begin(), query.plus_words.end(),
+                           matched_words.begin(),
+                           [this, document_id](const std::string& word) {
+                               return document_to_word_freqs_.at(document_id).count(word);
+                           });
+    matched_words.erase(it, matched_words.end());
+    std::sort(std::forward<ExecutionPolicy>(policy), matched_words.begin(), matched_words.end());
+    matched_words.erase(std::unique(std::forward<ExecutionPolicy>(policy), matched_words.begin(), matched_words.end()),
+                        matched_words.end());
 
     return std::tuple{matched_words, documents_.at(document_id).status};
 }
