@@ -20,7 +20,7 @@ static const double EPSILON = 1e-6;
 
 class SearchServer {
 public:
-    SearchServer() = default; // ���� ����������� ��� ����� ��� �������� ������������.
+    SearchServer() = default; // Этот конструктор был нужен для удобства тестирования.
 
     template<typename StringContainer>
     explicit SearchServer(const StringContainer& stop_words);
@@ -166,11 +166,11 @@ void SearchServer::RemoveDocument(ExecutionPolicy&& policy, int document_id) {
 template<class ExecutionPolicy>
 std::tuple<std::vector<std::string>, DocumentStatus>
 SearchServer::MatchDocument(ExecutionPolicy&& policy, const std::string& raw_query, int document_id) const {
-    assert(std::is_execution_policy_v<ExecutionPolicy>);
-    /*if constexpr(std::is_same_v<std::decay_t<ExecutionPolicy>,
+    assert(std::is_execution_policy_v<ExecutionPolicy>);  // В тренажере этот assert прерывает выполнение программы, то есть на самом деле параллельные алгоритмы не выполняются.
+    if constexpr(std::is_same_v<std::decay_t<ExecutionPolicy>,  // 26-й тест в тренажере успешно выполняется только с этим условием.
             std::execution::sequenced_policy>) {
         return MatchDocument(raw_query, document_id);
-    }*/
+    }
 
     if (!document_ids_.count(document_id)) {
         using namespace std::literals::string_literals;
