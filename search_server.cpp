@@ -178,7 +178,7 @@ SearchServer::Query SearchServer::ParseQuery(string_view text) const {
     return query;
 }
 
-SearchServer::QueryPar SearchServer::ParseQueryPar(std::string_view text) const {
+SearchServer::QueryPar SearchServer::ParseQueryPar(string_view text) const {
     QueryPar query;
     for (const string_view word: SplitIntoWordsView(text)) {
         const QueryWord query_word = ParseQueryWord(word);
