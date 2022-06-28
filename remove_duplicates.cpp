@@ -12,7 +12,7 @@ void RemoveDuplicates(SearchServer& search_server) {
 
     for (const int id: search_server) {
         for (const auto& [word, freq]: search_server.GetWordFrequencies(id)) {
-            ids_to_words[id].insert(word);
+            ids_to_words[id].insert(string(word));
         }
     }
 

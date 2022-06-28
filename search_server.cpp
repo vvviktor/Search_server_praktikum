@@ -3,11 +3,15 @@
 
 using namespace std;
 
+SearchServer::SearchServer(const string_view stop_words_text)
+        : SearchServer(SplitIntoWords(stop_words_text)) {
+}
+
 SearchServer::SearchServer(const string& stop_words_text)
         : SearchServer(SplitIntoWords(stop_words_text)) {
 }
 
-void SearchServer::AddDocument(int document_id, const string& document, DocumentStatus status,
+void SearchServer::AddDocument(int document_id, const string_view document, DocumentStatus status,
                                const vector<int>& ratings) {
 
     if (document_id < 0) {
@@ -16,12 +20,12 @@ void SearchServer::AddDocument(int document_id, const string& document, Document
         throw invalid_argument("Double addition of the document."s);
     }
 
-    const vector<std::string> words = SplitIntoWordsNoStop(document);
+    const vector<std::string_view> words = SplitIntoWordsNoStop(document);
     const double inv_word_count = 1.0 / words.size();
 
-    for (const string& word: words) {
-        word_to_document_freqs_[word][document_id] += inv_word_count;
-        document_to_word_freqs_[document_id][word] += inv_word_count;
+    for (const string_view word: words) {
+        word_to_document_freqs_[string(word)][document_id] += inv_word_count;
+        document_to_word_freqs_[document_id][string(word)] += inv_word_count;
     }
 
     documents_.emplace(document_id, DocumentData{ComputeAverageRating(ratings), status});
@@ -43,7 +47,7 @@ void SearchServer::RemoveDocument(int document_id) {
     document_ids_.erase(document_id);
 }
 
-vector<Document> SearchServer::FindTopDocuments(const string& raw_query, DocumentStatus status) const {
+vector<Document> SearchServer::FindTopDocuments(const string_view raw_query, DocumentStatus status) const {
     return FindTopDocuments(
             raw_query,
             [status](int document_id, DocumentStatus document_status, int rating) {
@@ -51,18 +55,18 @@ vector<Document> SearchServer::FindTopDocuments(const string& raw_query, Documen
             });
 }
 
-vector<Document> SearchServer::FindTopDocuments(const string& raw_query) const {
+vector<Document> SearchServer::FindTopDocuments(const string_view raw_query) const {
     return FindTopDocuments(raw_query, DocumentStatus::ACTUAL);
 }
 
-const map<string, double, less<>>& SearchServer::GetWordFrequencies(int document_id) const {
+const map<string_view, double>& SearchServer::GetWordFrequencies(int document_id) const {
 
     if (!document_to_word_freqs_.count(document_id)) {
-        static const map<string, double, less<>>& dummy = {};
+        static const map<string_view, double>& dummy = {};
         return dummy;
     }
 
-    return document_to_word_freqs_.at(document_id);
+    return (map<std::string_view, double>&) document_to_word_freqs_.at(document_id);
 }
 
 
@@ -121,9 +125,9 @@ bool SearchServer::IsValidWord(const string_view word) {
     });
 }
 
-vector<string> SearchServer::SplitIntoWordsNoStop(const string& text) const {
-    vector<string> words;
-    for (const string& word: SplitIntoWords(text)) {
+vector<string_view> SearchServer::SplitIntoWordsNoStop(const string_view text) const {
+    vector<string_view> words;
+    for (const string_view word: SplitIntoWordsView(text)) {
         if (!IsValidWord(word)) {
             throw invalid_argument("Document contains forbidden characters."s);
         }
@@ -141,7 +145,7 @@ int SearchServer::ComputeAverageRating(const std::vector<int>& ratings) {
     return accumulate(ratings.begin(), ratings.end(), 0) / static_cast<int>(ratings.size());
 }
 
-SearchServer::QueryWord SearchServer::ParseQueryWord(string text) const {
+SearchServer::QueryWord SearchServer::ParseQueryWord(string_view text) const {
     if (text.empty()) {
         throw invalid_argument("Empty request."s);
     }
@@ -162,30 +166,9 @@ SearchServer::QueryWord SearchServer::ParseQueryWord(string text) const {
     return QueryWord{text, is_minus, IsStopWord(text)};
 }
 
-SearchServer::QueryWordPar SearchServer::ParseQueryWordPar(std::string_view text) const {
-    if (text.empty()) {
-        throw invalid_argument("Empty request."s);
-    }
-    bool is_minus = false;
-    if (text[0] == '-') {
-        is_minus = true;
-        text = text.substr(1);
-    }
-    if (text.empty()) {
-        throw invalid_argument("Standalone '-' in request."s);
-    }
-    if (text[0] == '-') {
-        throw invalid_argument("'--' in request."s);
-    }
-    if (!IsValidWord(text)) {
-        throw invalid_argument("Forbidden characters in request."s);
-    }
-    return QueryWordPar{text, is_minus, IsStopWord(text)};
-}
-
-SearchServer::Query SearchServer::ParseQuery(const string& text) const {
+SearchServer::Query SearchServer::ParseQuery(const string_view text) const {
     Query query;
-    for (const string& word: SplitIntoWords(text)) {
+    for (const string_view word: SplitIntoWordsView(text)) {
         const QueryWord query_word = ParseQueryWord(word);
         if (!query_word.is_stop) {
             if (query_word.is_minus) {
@@ -201,7 +184,7 @@ SearchServer::Query SearchServer::ParseQuery(const string& text) const {
 SearchServer::QueryPar SearchServer::ParseQueryPar(const std::string_view text) const {
     QueryPar query;
     for (const string_view word: SplitIntoWordsView(text)) {
-        const QueryWordPar query_word = ParseQueryWordPar(word);
+        const QueryWord query_word = ParseQueryWord(word);
         if (!query_word.is_stop) {
             if (query_word.is_minus) {
                 query.minus_words.emplace_back(query_word.data);

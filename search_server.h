@@ -26,9 +26,11 @@ public:
     template<typename StringContainer>
     explicit SearchServer(const StringContainer& stop_words);
 
+    explicit SearchServer(const std::string_view stop_words_text);
+
     explicit SearchServer(const std::string& stop_words_text);
 
-    void AddDocument(int document_id, const std::string& document, DocumentStatus status,
+    void AddDocument(int document_id, const std::string_view document, DocumentStatus status,
                      const std::vector<int>& ratings);
 
     void RemoveDocument(int document_id);
@@ -37,13 +39,14 @@ public:
     void RemoveDocument(ExecutionPolicy&& policy, int document_id);
 
     template<typename DocumentPredicate>
-    std::vector<Document> FindTopDocuments(const std::string& raw_query, DocumentPredicate document_predicate) const;
+    std::vector<Document>
+    FindTopDocuments(const std::string_view raw_query, DocumentPredicate document_predicate) const;
 
-    std::vector<Document> FindTopDocuments(const std::string& raw_query, DocumentStatus status) const;
+    std::vector<Document> FindTopDocuments(const std::string_view raw_query, DocumentStatus status) const;
 
-    std::vector<Document> FindTopDocuments(const std::string& raw_query) const;
+    std::vector<Document> FindTopDocuments(const std::string_view raw_query) const;
 
-    const std::map<std::string, double, std::less<>>& GetWordFrequencies(int document_id) const;
+    const std::map<std::string_view, double>& GetWordFrequencies(int document_id) const;
 
     int GetDocumentCount() const;
 
@@ -74,29 +77,21 @@ private:
 
     static bool IsValidWord(const std::string_view word);
 
-    std::vector<std::string> SplitIntoWordsNoStop(const std::string& text) const;
+    std::vector<std::string_view> SplitIntoWordsNoStop(const std::string_view text) const;
 
     static int ComputeAverageRating(const std::vector<int>& ratings);
 
     struct QueryWord {
-        std::string data;
-        bool is_minus;
-        bool is_stop;
-    };
-
-    struct QueryWordPar {
         std::string_view data;
         bool is_minus;
         bool is_stop;
     };
 
-    QueryWord ParseQueryWord(std::string text) const;
-
-    QueryWordPar ParseQueryWordPar(std::string_view text) const;
+    QueryWord ParseQueryWord(std::string_view text) const;
 
     struct Query {
-        std::set<std::string> plus_words;
-        std::set<std::string> minus_words;
+        std::set<std::string_view> plus_words;
+        std::set<std::string_view> minus_words;
     };
 
     struct QueryPar {
@@ -104,7 +99,7 @@ private:
         std::vector<std::string_view> minus_words;
     };
 
-    Query ParseQuery(const std::string& text) const;
+    Query ParseQuery(const std::string_view text) const;
 
     QueryPar ParseQueryPar(const std::string_view text) const;
 
@@ -127,7 +122,7 @@ SearchServer::SearchServer(const StringContainer& stop_words)
 
 template<typename DocumentPredicate>
 std::vector<Document>
-SearchServer::FindTopDocuments(const std::string& raw_query, DocumentPredicate document_predicate) const {
+SearchServer::FindTopDocuments(const std::string_view raw_query, DocumentPredicate document_predicate) const {
     const Query query = ParseQuery(raw_query);
     auto matched_documents = FindAllDocuments(query, document_predicate);
 
@@ -146,11 +141,8 @@ SearchServer::FindTopDocuments(const std::string& raw_query, DocumentPredicate d
 
 template<class ExecutionPolicy>
 void SearchServer::RemoveDocument(ExecutionPolicy&& policy, int document_id) {
-    bool existence = std::any_of(policy, document_ids_.begin(), document_ids_.end(), [document_id](const auto& elem) {
-        return elem == document_id;
-    });
 
-    if (!existence) {
+    if (!document_ids_.count(document_id)) {
         using namespace std::literals::string_literals;
         throw std::invalid_argument("Attempt to remove non-existing ID."s);
     }
@@ -162,7 +154,7 @@ void SearchServer::RemoveDocument(ExecutionPolicy&& policy, int document_id) {
         words_to_process.emplace_back(word);
     }
 
-    std::for_each(policy, words_to_process.begin(),
+    std::for_each(std::forward<ExecutionPolicy>(policy), words_to_process.begin(),
                   words_to_process.end(), [this, document_id](auto& word) {
                 word_to_document_freqs_.at(word).erase(document_id);
             });
@@ -214,12 +206,12 @@ template<typename DocumentPredicate>
 std::vector<Document>
 SearchServer::FindAllDocuments(const Query& query, DocumentPredicate document_predicate) const {
     std::map<int, double> document_to_relevance;
-    for (const std::string& word: query.plus_words) {
+    for (const std::string_view word: query.plus_words) {
         if (word_to_document_freqs_.count(word) == 0) {
             continue;
         }
-        const double inverse_document_freq = ComputeWordInverseDocumentFreq(word);
-        for (const auto [document_id, term_freq]: word_to_document_freqs_.at(word)) {
+        const double inverse_document_freq = ComputeWordInverseDocumentFreq(std::string(word));
+        for (const auto [document_id, term_freq]: word_to_document_freqs_.at(std::string(word))) {
             const auto& document_data = documents_.at(document_id);
             if (document_predicate(document_id, document_data.status, document_data.rating)) {
                 document_to_relevance[document_id] += term_freq * inverse_document_freq;
@@ -227,11 +219,11 @@ SearchServer::FindAllDocuments(const Query& query, DocumentPredicate document_pr
         }
     }
 
-    for (const std::string& word: query.minus_words) {
+    for (const std::string_view word: query.minus_words) {
         if (word_to_document_freqs_.count(word) == 0) {
             continue;
         }
-        for (const auto [document_id, _]: word_to_document_freqs_.at(word)) {
+        for (const auto [document_id, _]: word_to_document_freqs_.at(std::string(word))) {
             document_to_relevance.erase(document_id);
         }
     }
