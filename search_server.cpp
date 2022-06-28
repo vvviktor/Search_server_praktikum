@@ -81,28 +81,25 @@ SearchServer::MatchDocument(const string_view raw_query, int document_id) const 
         throw out_of_range("Document ID is out of range."s);
     }
 
-    const QueryPar query = ParseQueryPar(raw_query);
+    const Query query = ParseQuery(raw_query);
     vector<string_view> matched_words;
+
+    if (any_of(query.minus_words.begin(), query.minus_words.end(),
+               [this, document_id](const std::string_view word) {
+                   return document_to_word_freqs_.at(document_id).count(word);
+               })) {
+        return tuple{matched_words, documents_.at(document_id).status};
+    }
+
     for (const string_view word: query.plus_words) {
         if (word_to_document_freqs_.count(word) == 0) {
             continue;
         }
-        if (word_to_document_freqs_.at(string(word)).count(document_id)) {
+        if (document_to_word_freqs_.at(document_id).count(word)) {
             matched_words.push_back(word);
         }
     }
-    for (const string_view word: query.minus_words) {
-        if (word_to_document_freqs_.count(word) == 0) {
-            continue;
-        }
-        if (word_to_document_freqs_.at(string(word)).count(document_id)) {
-            matched_words.clear();
-            break;
-        }
-    }
-    std::sort(matched_words.begin(), matched_words.end());
-    matched_words.erase(std::unique(matched_words.begin(), matched_words.end()),
-                        matched_words.end());
+
     return tuple{matched_words, documents_.at(document_id).status};
 }
 
