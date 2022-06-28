@@ -208,12 +208,12 @@ void TestGetWordFrequencies() {
     {
         SearchServer server("in the"s);
         ASSERT_EQUAL(server.GetDocumentCount(), 0);
-        const map<string, double> got_word_freqs = server.GetWordFrequencies(doc0_id);
+        const map<string, double, less<>> got_word_freqs = server.GetWordFrequencies(doc0_id);
         ASSERT_HINT(got_word_freqs.empty(),
                     "Non-empty result returned for non-existing document. Check GetWordFrequencies method."s);
         server.AddDocument(doc0_id, content0, DocumentStatus::ACTUAL, ratings0);
         ASSERT_EQUAL(server.GetDocumentCount(), 1);
-        const map<string, double> got_word_freqs0 = server.GetWordFrequencies(doc0_id);
+        const map<string, double, less<>> got_word_freqs0 = server.GetWordFrequencies(doc0_id);
         ASSERT_HINT(!got_word_freqs0.empty(),
                     "Empty result returned for existing document. Check GetWordFrequencies method."s);
         ASSERT_HINT(!got_word_freqs0.count("the"s), "Stop words in result. ");
@@ -241,7 +241,7 @@ void TestRemoveDocument() {
                           "Failed to remove document. documents_ not empty. Check RemoveDocument method."s);
         ASSERT_EQUAL_HINT(distance(server.begin(), server.end()), 0,
                           "Failed to remove document. document_ids_ not empty. Check RemoveDocument method."s);
-        const map<string, double> got_word_freqs0 = server.GetWordFrequencies(doc0_id);
+        const map<string, double, less<>> got_word_freqs0 = server.GetWordFrequencies(doc0_id);
         ASSERT_HINT(got_word_freqs0.empty(),
                     "Failed to remove document. GetWordFrequencies() returned non-empty result. Check RemoveDocument method.");
         const auto found_docs = server.FindTopDocuments("young city cat"s);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 #include <vector>
 #include <set>
 #include <map>
@@ -42,16 +43,16 @@ public:
 
     std::vector<Document> FindTopDocuments(const std::string& raw_query) const;
 
-    const std::map<std::string, double>& GetWordFrequencies(int document_id) const;
+    const std::map<std::string, double, std::less<>>& GetWordFrequencies(int document_id) const;
 
     int GetDocumentCount() const;
 
-    std::tuple<std::vector<std::string>, DocumentStatus>
-    MatchDocument(const std::string& raw_query, int document_id) const;
+    std::tuple<std::vector<std::string_view>, DocumentStatus>
+    MatchDocument(const std::string_view raw_query, int document_id) const;
 
     template<class ExecutionPolicy>
-    std::tuple<std::vector<std::string>, DocumentStatus>
-    MatchDocument(ExecutionPolicy&& policy, const std::string& raw_query, int document_id) const;
+    std::tuple<std::vector<std::string_view>, DocumentStatus>
+    MatchDocument(ExecutionPolicy&& policy, const std::string_view raw_query, int document_id) const;
 
     std::set<int>::const_iterator begin() const;
 
@@ -63,15 +64,15 @@ private:
         DocumentStatus status;
     };
 
-    std::set<std::string> stop_words_;
-    std::map<std::string, std::map<int, double>> word_to_document_freqs_;
-    std::map<int, std::map<std::string, double>> document_to_word_freqs_;
+    std::set<std::string, std::less<>> stop_words_;
+    std::map<std::string, std::map<int, double>, std::less<>> word_to_document_freqs_;
+    std::map<int, std::map<std::string, double, std::less<>>> document_to_word_freqs_;
     std::map<int, DocumentData> documents_;
     std::set<int> document_ids_;
 
-    bool IsStopWord(const std::string& word) const;
+    bool IsStopWord(const std::string_view word) const;
 
-    static bool IsValidWord(const std::string& word);
+    static bool IsValidWord(const std::string_view word);
 
     std::vector<std::string> SplitIntoWordsNoStop(const std::string& text) const;
 
@@ -83,7 +84,15 @@ private:
         bool is_stop;
     };
 
+    struct QueryWordPar {
+        std::string_view data;
+        bool is_minus;
+        bool is_stop;
+    };
+
     QueryWord ParseQueryWord(std::string text) const;
+
+    QueryWordPar ParseQueryWordPar(std::string_view text) const;
 
     struct Query {
         std::set<std::string> plus_words;
@@ -91,13 +100,13 @@ private:
     };
 
     struct QueryPar {
-        std::vector<std::string> plus_words;
-        std::vector<std::string> minus_words;
+        std::vector<std::string_view> plus_words;
+        std::vector<std::string_view> minus_words;
     };
 
     Query ParseQuery(const std::string& text) const;
 
-    QueryPar ParseQueryPar(const std::string& text) const;
+    QueryPar ParseQueryPar(const std::string_view text) const;
 
     double ComputeWordInverseDocumentFreq(const std::string& word) const;
 
@@ -164,8 +173,8 @@ void SearchServer::RemoveDocument(ExecutionPolicy&& policy, int document_id) {
 }
 
 template<class ExecutionPolicy>
-std::tuple<std::vector<std::string>, DocumentStatus>
-SearchServer::MatchDocument(ExecutionPolicy&& policy, const std::string& raw_query, int document_id) const {
+std::tuple<std::vector<std::string_view>, DocumentStatus>
+SearchServer::MatchDocument(ExecutionPolicy&& policy, const std::string_view raw_query, int document_id) const {
     assert(std::is_execution_policy_v<ExecutionPolicy>);  // В тренажере этот assert прерывает выполнение программы, то есть на самом деле параллельные алгоритмы не выполняются.
     if constexpr(std::is_same_v<std::decay_t<ExecutionPolicy>,  // 26-й тест в тренажере успешно выполняется только с этим условием.
             std::execution::sequenced_policy>) {
@@ -178,10 +187,10 @@ SearchServer::MatchDocument(ExecutionPolicy&& policy, const std::string& raw_que
     }
 
     const QueryPar query = ParseQueryPar(raw_query);
-    std::vector<std::string> matched_words(query.plus_words.size());
+    std::vector<std::string_view> matched_words(query.plus_words.size());
 
     if (std::any_of(std::forward<ExecutionPolicy>(policy), query.minus_words.begin(), query.minus_words.end(),
-                    [this, document_id](const std::string& word) {
+                    [this, document_id](const std::string_view word) {
                         return document_to_word_freqs_.at(document_id).count(word);
                     })) {
         matched_words.clear();
@@ -190,7 +199,7 @@ SearchServer::MatchDocument(ExecutionPolicy&& policy, const std::string& raw_que
 
     auto it = std::copy_if(std::forward<ExecutionPolicy>(policy), query.plus_words.begin(), query.plus_words.end(),
                            matched_words.begin(),
-                           [this, document_id](const std::string& word) {
+                           [this, document_id](const std::string_view word) {
                                return document_to_word_freqs_.at(document_id).count(word);
                            });
     matched_words.erase(it, matched_words.end());
