@@ -2,8 +2,8 @@
 
 using namespace std;
 
-vector<string> SplitIntoWords(const string_view text) {
-    vector<string> words;
+vector <string> SplitIntoWords(string_view text) {
+    vector <string> words;
     string word;
     for (const char c: text) {
         if (c == ' ') {
@@ -22,8 +22,8 @@ vector<string> SplitIntoWords(const string_view text) {
     return words;
 }
 
-vector<string_view> SplitIntoWordsView(string_view str) {
-    vector<string_view> result;
+vector <string_view> SplitIntoWordsView(string_view str) {
+    vector <string_view> result;
     str.remove_prefix(min(str.size(), str.find_first_not_of(' ')));
     const int64_t pos_end = str.npos;
 

@@ -26,11 +26,11 @@ public:
     template<typename StringContainer>
     explicit SearchServer(const StringContainer& stop_words);
 
-    explicit SearchServer(const std::string_view stop_words_text);
+    explicit SearchServer(std::string_view stop_words_text);
 
     explicit SearchServer(const std::string& stop_words_text);
 
-    void AddDocument(int document_id, const std::string_view document, DocumentStatus status,
+    void AddDocument(int document_id, std::string_view document, DocumentStatus status,
                      const std::vector<int>& ratings);
 
     void RemoveDocument(int document_id);
@@ -40,22 +40,22 @@ public:
 
     template<typename DocumentPredicate>
     std::vector<Document>
-    FindTopDocuments(const std::string_view raw_query, DocumentPredicate document_predicate) const;
+    FindTopDocuments(std::string_view raw_query, DocumentPredicate document_predicate) const;
 
-    std::vector<Document> FindTopDocuments(const std::string_view raw_query, DocumentStatus status) const;
+    std::vector<Document> FindTopDocuments(std::string_view raw_query, DocumentStatus status) const;
 
-    std::vector<Document> FindTopDocuments(const std::string_view raw_query) const;
+    std::vector<Document> FindTopDocuments(std::string_view raw_query) const;
 
     const std::map<std::string_view, double>& GetWordFrequencies(int document_id) const;
 
     int GetDocumentCount() const;
 
     std::tuple<std::vector<std::string_view>, DocumentStatus>
-    MatchDocument(const std::string_view raw_query, int document_id) const;
+    MatchDocument(std::string_view raw_query, int document_id) const;
 
     template<class ExecutionPolicy>
     std::tuple<std::vector<std::string_view>, DocumentStatus>
-    MatchDocument(ExecutionPolicy&& policy, const std::string_view raw_query, int document_id) const;
+    MatchDocument(ExecutionPolicy&& policy, std::string_view raw_query, int document_id) const;
 
     std::set<int>::const_iterator begin() const;
 
@@ -73,11 +73,11 @@ private:
     std::map<int, DocumentData> documents_;
     std::set<int> document_ids_;
 
-    bool IsStopWord(const std::string_view word) const;
+    bool IsStopWord(std::string_view word) const;
 
-    static bool IsValidWord(const std::string_view word);
+    static bool IsValidWord(std::string_view word);
 
-    std::vector<std::string_view> SplitIntoWordsNoStop(const std::string_view text) const;
+    std::vector<std::string_view> SplitIntoWordsNoStop(std::string_view text) const;
 
     static int ComputeAverageRating(const std::vector<int>& ratings);
 
@@ -99,9 +99,9 @@ private:
         std::vector<std::string_view> minus_words;
     };
 
-    Query ParseQuery(const std::string_view text) const;
+    Query ParseQuery(std::string_view text) const;
 
-    QueryPar ParseQueryPar(const std::string_view text) const;
+    QueryPar ParseQueryPar(std::string_view text) const;
 
     double ComputeWordInverseDocumentFreq(const std::string& word) const;
 
@@ -122,7 +122,7 @@ SearchServer::SearchServer(const StringContainer& stop_words)
 
 template<typename DocumentPredicate>
 std::vector<Document>
-SearchServer::FindTopDocuments(const std::string_view raw_query, DocumentPredicate document_predicate) const {
+SearchServer::FindTopDocuments(std::string_view raw_query, DocumentPredicate document_predicate) const {
     const Query query = ParseQuery(raw_query);
     auto matched_documents = FindAllDocuments(query, document_predicate);
 
@@ -166,7 +166,7 @@ void SearchServer::RemoveDocument(ExecutionPolicy&& policy, int document_id) {
 
 template<class ExecutionPolicy>
 std::tuple<std::vector<std::string_view>, DocumentStatus>
-SearchServer::MatchDocument(ExecutionPolicy&& policy, const std::string_view raw_query, int document_id) const {
+SearchServer::MatchDocument(ExecutionPolicy&& policy, std::string_view raw_query, int document_id) const {
     assert(std::is_execution_policy_v<ExecutionPolicy>);  // В тренажере этот assert прерывает выполнение программы, то есть на самом деле параллельные алгоритмы не выполняются.
     if constexpr(std::is_same_v<std::decay_t<ExecutionPolicy>,  // 26-й тест в тренажере успешно выполняется только с этим условием.
             std::execution::sequenced_policy>) {
@@ -182,7 +182,7 @@ SearchServer::MatchDocument(ExecutionPolicy&& policy, const std::string_view raw
     std::vector<std::string_view> matched_words(query.plus_words.size());
 
     if (std::any_of(std::forward<ExecutionPolicy>(policy), query.minus_words.begin(), query.minus_words.end(),
-                    [this, document_id](const std::string_view word) {
+                    [this, document_id](std::string_view word) {
                         return document_to_word_freqs_.at(document_id).count(word);
                     })) {
         matched_words.clear();
@@ -191,7 +191,7 @@ SearchServer::MatchDocument(ExecutionPolicy&& policy, const std::string_view raw
 
     auto it = std::copy_if(std::forward<ExecutionPolicy>(policy), query.plus_words.begin(), query.plus_words.end(),
                            matched_words.begin(),
-                           [this, document_id](const std::string_view word) {
+                           [this, document_id](std::string_view word) {
                                return document_to_word_freqs_.at(document_id).count(word);
                            });
     matched_words.erase(it, matched_words.end());
@@ -206,7 +206,7 @@ template<typename DocumentPredicate>
 std::vector<Document>
 SearchServer::FindAllDocuments(const Query& query, DocumentPredicate document_predicate) const {
     std::map<int, double> document_to_relevance;
-    for (const std::string_view word: query.plus_words) {
+    for (std::string_view word: query.plus_words) {
         if (word_to_document_freqs_.count(word) == 0) {
             continue;
         }
@@ -219,7 +219,7 @@ SearchServer::FindAllDocuments(const Query& query, DocumentPredicate document_pr
         }
     }
 
-    for (const std::string_view word: query.minus_words) {
+    for (std::string_view word: query.minus_words) {
         if (word_to_document_freqs_.count(word) == 0) {
             continue;
         }

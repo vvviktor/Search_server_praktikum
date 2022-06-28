@@ -3,7 +3,7 @@
 
 using namespace std;
 
-SearchServer::SearchServer(const string_view stop_words_text)
+SearchServer::SearchServer(string_view stop_words_text)
         : SearchServer(SplitIntoWords(stop_words_text)) {
 }
 
@@ -11,7 +11,7 @@ SearchServer::SearchServer(const string& stop_words_text)
         : SearchServer(SplitIntoWords(stop_words_text)) {
 }
 
-void SearchServer::AddDocument(int document_id, const string_view document, DocumentStatus status,
+void SearchServer::AddDocument(int document_id, string_view document, DocumentStatus status,
                                const vector<int>& ratings) {
 
     if (document_id < 0) {
@@ -23,7 +23,7 @@ void SearchServer::AddDocument(int document_id, const string_view document, Docu
     const vector<std::string_view> words = SplitIntoWordsNoStop(document);
     const double inv_word_count = 1.0 / words.size();
 
-    for (const string_view word: words) {
+    for (string_view word: words) {
         word_to_document_freqs_[string(word)][document_id] += inv_word_count;
         document_to_word_freqs_[document_id][string(word)] += inv_word_count;
     }
@@ -47,7 +47,7 @@ void SearchServer::RemoveDocument(int document_id) {
     document_ids_.erase(document_id);
 }
 
-vector<Document> SearchServer::FindTopDocuments(const string_view raw_query, DocumentStatus status) const {
+vector<Document> SearchServer::FindTopDocuments(string_view raw_query, DocumentStatus status) const {
     return FindTopDocuments(
             raw_query,
             [status](int document_id, DocumentStatus document_status, int rating) {
@@ -55,7 +55,7 @@ vector<Document> SearchServer::FindTopDocuments(const string_view raw_query, Doc
             });
 }
 
-vector<Document> SearchServer::FindTopDocuments(const string_view raw_query) const {
+vector<Document> SearchServer::FindTopDocuments(string_view raw_query) const {
     return FindTopDocuments(raw_query, DocumentStatus::ACTUAL);
 }
 
@@ -75,7 +75,7 @@ int SearchServer::GetDocumentCount() const {
 }
 
 tuple<vector<string_view>, DocumentStatus>
-SearchServer::MatchDocument(const string_view raw_query, int document_id) const {
+SearchServer::MatchDocument(string_view raw_query, int document_id) const {
 
     if (!document_ids_.count(document_id)) {
         throw out_of_range("Document ID is out of range."s);
@@ -85,7 +85,7 @@ SearchServer::MatchDocument(const string_view raw_query, int document_id) const 
     vector<string_view> matched_words;
 
     if (any_of(query.minus_words.begin(), query.minus_words.end(),
-               [this, document_id](const std::string_view word) {
+               [this, document_id](std::string_view word) {
                    return document_to_word_freqs_.at(document_id).count(word);
                })) {
         return tuple{matched_words, documents_.at(document_id).status};
@@ -111,18 +111,18 @@ set<int>::const_iterator SearchServer::end() const {
     return document_ids_.end();
 }
 
-bool SearchServer::IsStopWord(const string_view word) const {
+bool SearchServer::IsStopWord(string_view word) const {
     return stop_words_.count(word) > 0;
 }
 
-bool SearchServer::IsValidWord(const string_view word) {
+bool SearchServer::IsValidWord(string_view word) {
     // A valid word must not contain special characters
     return none_of(word.begin(), word.end(), [](char c) {
         return c >= '\0' && c < ' ';
     });
 }
 
-vector<string_view> SearchServer::SplitIntoWordsNoStop(const string_view text) const {
+vector<string_view> SearchServer::SplitIntoWordsNoStop(string_view text) const {
     vector<string_view> words;
     for (const string_view word: SplitIntoWordsView(text)) {
         if (!IsValidWord(word)) {
@@ -163,7 +163,7 @@ SearchServer::QueryWord SearchServer::ParseQueryWord(string_view text) const {
     return QueryWord{text, is_minus, IsStopWord(text)};
 }
 
-SearchServer::Query SearchServer::ParseQuery(const string_view text) const {
+SearchServer::Query SearchServer::ParseQuery(string_view text) const {
     Query query;
     for (const string_view word: SplitIntoWordsView(text)) {
         const QueryWord query_word = ParseQueryWord(word);
@@ -178,7 +178,7 @@ SearchServer::Query SearchServer::ParseQuery(const string_view text) const {
     return query;
 }
 
-SearchServer::QueryPar SearchServer::ParseQueryPar(const std::string_view text) const {
+SearchServer::QueryPar SearchServer::ParseQueryPar(std::string_view text) const {
     QueryPar query;
     for (const string_view word: SplitIntoWordsView(text)) {
         const QueryWord query_word = ParseQueryWord(word);
