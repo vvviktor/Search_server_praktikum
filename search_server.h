@@ -167,7 +167,7 @@ void SearchServer::RemoveDocument(ExecutionPolicy&& policy, int document_id) {
 template<class ExecutionPolicy>
 std::tuple<std::vector<std::string_view>, DocumentStatus>
 SearchServer::MatchDocument(ExecutionPolicy&& policy, std::string_view raw_query, int document_id) const {
-    assert(std::is_execution_policy_v<ExecutionPolicy>);  // В тренажере этот assert прерывает выполнение программы, то есть на самом деле параллельные алгоритмы не выполняются.
+    assert(std::is_execution_policy_v<std::decay_t<ExecutionPolicy>>);
     if constexpr(std::is_same_v<std::decay_t<ExecutionPolicy>,  // 26-й тест в тренажере успешно выполняется только с этим условием.
             std::execution::sequenced_policy>) {
         return MatchDocument(raw_query, document_id);
