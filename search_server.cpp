@@ -124,7 +124,7 @@ bool SearchServer::IsValidWord(string_view word) {
 
 vector<string_view> SearchServer::SplitIntoWordsNoStop(string_view text) const {
     vector<string_view> words;
-    for (const string_view word: SplitIntoWordsView(text)) {
+    for (string_view word: SplitIntoWordsView(text)) {
         if (!IsValidWord(word)) {
             throw invalid_argument("Document contains forbidden characters."s);
         }
@@ -165,7 +165,7 @@ SearchServer::QueryWord SearchServer::ParseQueryWord(string_view text) const {
 
 SearchServer::Query SearchServer::ParseQuery(string_view text) const {
     Query query;
-    for (const string_view word: SplitIntoWordsView(text)) {
+    for (string_view word: SplitIntoWordsView(text)) {
         const QueryWord query_word = ParseQueryWord(word);
         if (!query_word.is_stop) {
             if (query_word.is_minus) {
@@ -180,7 +180,7 @@ SearchServer::Query SearchServer::ParseQuery(string_view text) const {
 
 SearchServer::QueryPar SearchServer::ParseQueryPar(string_view text) const {
     QueryPar query;
-    for (const string_view word: SplitIntoWordsView(text)) {
+    for (string_view word: SplitIntoWordsView(text)) {
         const QueryWord query_word = ParseQueryWord(word);
         if (!query_word.is_stop) {
             if (query_word.is_minus) {
