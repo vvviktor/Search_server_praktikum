@@ -112,6 +112,7 @@ private:
 template<typename StringContainer>
 SearchServer::SearchServer(const StringContainer& stop_words)
         : stop_words_(MakeUniqueNonEmptyStrings(stop_words)) {
+
     if (!std::all_of(stop_words_.begin(), stop_words_.end(), [](const auto& word) {
         return IsValidWord(word);
     })) {
@@ -133,9 +134,11 @@ SearchServer::FindTopDocuments(std::string_view raw_query, DocumentPredicate doc
             return lhs.relevance > rhs.relevance;
         }
     });
+
     if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT) {
         matched_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
     }
+
     return matched_documents;
 }
 
@@ -207,6 +210,7 @@ template<typename DocumentPredicate>
 std::vector<Document>
 SearchServer::FindAllDocuments(const Query& query, DocumentPredicate document_predicate) const {
     std::map<int, double> document_to_relevance;
+
     for (std::string_view word: query.plus_words) {
         if (word_to_document_freqs_.count(word) == 0) {
             continue;
@@ -230,9 +234,11 @@ SearchServer::FindAllDocuments(const Query& query, DocumentPredicate document_pr
     }
 
     std::vector<Document> matched_documents;
+
     for (const auto [document_id, relevance]: document_to_relevance) {
         matched_documents.push_back({document_id, relevance, documents_.at(document_id).rating});
     }
+
     return matched_documents;
 }
 

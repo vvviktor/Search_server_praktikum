@@ -124,6 +124,7 @@ bool SearchServer::IsValidWord(string_view word) {
 
 vector<string_view> SearchServer::SplitIntoWordsNoStop(string_view text) const {
     vector<string_view> words;
+
     for (string_view word: SplitIntoWordsView(text)) {
         if (!IsValidWord(word)) {
             throw invalid_argument("Document contains forbidden characters."s);
@@ -132,39 +133,50 @@ vector<string_view> SearchServer::SplitIntoWordsNoStop(string_view text) const {
             words.push_back(word);
         }
     }
+
     return words;
 }
 
 int SearchServer::ComputeAverageRating(const std::vector<int>& ratings) {
+
     if (ratings.empty()) {
         return 0;
     }
+
     return accumulate(ratings.begin(), ratings.end(), 0) / static_cast<int>(ratings.size());
 }
 
 SearchServer::QueryWord SearchServer::ParseQueryWord(string_view text) const {
+
     if (text.empty()) {
         throw invalid_argument("Empty request."s);
     }
+
     bool is_minus = false;
+
     if (text[0] == '-') {
         is_minus = true;
         text = text.substr(1);
     }
+
     if (text.empty()) {
         throw invalid_argument("Standalone '-' in request."s);
     }
+
     if (text[0] == '-') {
         throw invalid_argument("'--' in request."s);
     }
+
     if (!IsValidWord(text)) {
         throw invalid_argument("Forbidden characters in request."s);
     }
+
     return QueryWord{text, is_minus, IsStopWord(text)};
 }
 
 SearchServer::Query SearchServer::ParseQuery(string_view text) const {
     Query query;
+
     for (string_view word: SplitIntoWordsView(text)) {
         const QueryWord query_word = ParseQueryWord(word);
         if (!query_word.is_stop) {
@@ -175,11 +187,13 @@ SearchServer::Query SearchServer::ParseQuery(string_view text) const {
             }
         }
     }
+
     return query;
 }
 
 SearchServer::QueryPar SearchServer::ParseQueryPar(string_view text) const {
     QueryPar query;
+
     for (string_view word: SplitIntoWordsView(text)) {
         const QueryWord query_word = ParseQueryWord(word);
         if (!query_word.is_stop) {
@@ -190,6 +204,7 @@ SearchServer::QueryPar SearchServer::ParseQueryPar(string_view text) const {
             }
         }
     }
+
     return query;
 }
 
