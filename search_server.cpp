@@ -20,8 +20,9 @@ void SearchServer::AddDocument(int document_id, string_view document, DocumentSt
     const double inv_word_count = 1.0 / words.size();
 
     for (string_view word: words) {
-        word_to_document_freqs_[string(word)][document_id] += inv_word_count;
         document_to_word_freqs_[document_id][string(word)] += inv_word_count;
+        const auto it = document_to_word_freqs_[document_id].find(word);
+        word_to_document_freqs_[it->first][document_id] += inv_word_count;
     }
 
     documents_.emplace(document_id, DocumentData{ComputeAverageRating(ratings), status});
@@ -204,7 +205,7 @@ SearchServer::QueryPar SearchServer::ParseQueryPar(string_view text) const {
     return query;
 }
 
-double SearchServer::ComputeWordInverseDocumentFreq(const string& word) const {
+double SearchServer::ComputeWordInverseDocumentFreq(string_view word) const {
     return log(GetDocumentCount() * 1.0 / word_to_document_freqs_.at(word).size());
 }
 

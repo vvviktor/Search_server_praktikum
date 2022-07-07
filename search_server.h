@@ -66,7 +66,7 @@ private:
     };
 
     std::set<std::string, std::less<>> stop_words_;
-    std::map<std::string, std::map<int, double>, std::less<>> word_to_document_freqs_;
+    std::map<std::string_view, std::map<int, double>> word_to_document_freqs_;
     std::map<int, std::map<std::string, double, std::less<>>> document_to_word_freqs_;
     std::map<int, DocumentData> documents_;
     std::set<int> document_ids_;
@@ -101,7 +101,7 @@ private:
 
     QueryPar ParseQueryPar(std::string_view text) const;
 
-    double ComputeWordInverseDocumentFreq(const std::string& word) const;
+    double ComputeWordInverseDocumentFreq(std::string_view word) const;
 
     template<typename DocumentPredicate>
     std::vector<Document> FindAllDocuments(const Query& query, DocumentPredicate document_predicate) const;
@@ -213,8 +213,8 @@ SearchServer::FindAllDocuments(const Query& query, DocumentPredicate document_pr
         if (word_to_document_freqs_.count(word) == 0) {
             continue;
         }
-        const double inverse_document_freq = ComputeWordInverseDocumentFreq(std::string(word));
-        for (const auto [document_id, term_freq]: word_to_document_freqs_.at(std::string(word))) {
+        const double inverse_document_freq = ComputeWordInverseDocumentFreq(word);
+        for (const auto [document_id, term_freq]: word_to_document_freqs_.at(word)) {
             const auto& document_data = documents_.at(document_id);
             if (document_predicate(document_id, document_data.status, document_data.rating)) {
                 document_to_relevance[document_id] += term_freq * inverse_document_freq;
@@ -226,7 +226,7 @@ SearchServer::FindAllDocuments(const Query& query, DocumentPredicate document_pr
         if (word_to_document_freqs_.count(word) == 0) {
             continue;
         }
-        for (const auto [document_id, _]: word_to_document_freqs_.at(std::string(word))) {
+        for (const auto [document_id, _]: word_to_document_freqs_.at(word)) {
             document_to_relevance.erase(document_id);
         }
     }
