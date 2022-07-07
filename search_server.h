@@ -336,11 +336,6 @@ template<typename ExecutionPolicy, typename DocumentPredicate>
 std::vector<Document>
 SearchServer::FindAllDocuments(ExecutionPolicy&& policy, const Query& query,
                                DocumentPredicate document_predicate) const {
-
-    if constexpr(std::is_same_v<std::decay_t<ExecutionPolicy>, std::execution::sequenced_policy>) {
-        return FindAllDocuments(query, document_predicate);
-    }
-
     ConcurrentMap<int, double> document_to_relevance_par(5000);
     ConcurrentMap<int, DocumentData> documents_par(documents_, 5000);
     const auto func_plus = [this, &document_predicate, &document_to_relevance_par, &documents_par](
