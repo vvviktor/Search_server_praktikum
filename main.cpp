@@ -47,7 +47,8 @@ string GenerateQuery(mt19937& generator, const vector<string>& dictionary, int w
     return query;
 }
 
-vector<string> GenerateQueries(mt19937& generator, const vector<string>& dictionary, int query_count, int max_word_count) {
+vector<string>
+GenerateQueries(mt19937& generator, const vector<string>& dictionary, int query_count, int max_word_count) {
     vector<string> queries;
     queries.reserve(query_count);
     for (int i = 0; i < query_count; ++i) {
@@ -57,6 +58,20 @@ vector<string> GenerateQueries(mt19937& generator, const vector<string>& diction
 }
 
 template <typename ExecutionPolicy>
+void Test(string_view mark, const SearchServer& search_server, const vector<string>& queries, ExecutionPolicy&& policy) {
+    LOG_DURATION(mark);
+    double total_relevance = 0;
+    for (const string_view query : queries) {
+        for (const auto& document : search_server.FindTopDocuments(policy, query)) {
+            total_relevance += document.relevance;
+        }
+    }
+    cout << total_relevance << endl;
+}
+
+#define TEST(policy) Test(#policy, search_server, queries, execution::policy)
+
+/*template<typename ExecutionPolicy>
 void Test(string_view mark, SearchServer search_server, const string& query, ExecutionPolicy&& policy) {
     LOG_DURATION(mark);
     const int document_count = search_server.GetDocumentCount();
@@ -68,9 +83,65 @@ void Test(string_view mark, SearchServer search_server, const string& query, Exe
     cout << word_count << endl;
 }
 
-#define TEST(policy) Test(#policy, search_server, query, execution::policy)
+#define TEST(policy) Test(#policy, search_server, query, execution::policy)*/
 
 int main() {
+    mt19937 generator;
+
+    const auto dictionary = GenerateDictionary(generator, 1000, 10);
+    const auto documents = GenerateQueries(generator, dictionary, 10'000, 70);
+
+    SearchServer search_server(dictionary[0]);
+    for (size_t i = 0; i < documents.size(); ++i) {
+        search_server.AddDocument(i, documents[i], DocumentStatus::ACTUAL, {1, 2, 3});
+    }
+
+    const auto queries = GenerateQueries(generator, dictionary, 100, 70);
+
+    TEST(seq);
+    TEST(par);
+}
+
+/*int main() {
+    SearchServer search_server("and with"s);
+
+    int id = 0;
+    for (
+        const string& text: {
+            "white cat and yellow hat"s,
+            "curly cat curly tail"s,
+            "nasty dog with big eyes"s,
+            "nasty pigeon john"s,
+    }
+            ) {
+        search_server.AddDocument(++id, text, DocumentStatus::ACTUAL, {1, 2});
+    }
+
+
+    cout << "ACTUAL by default:"s << endl;
+    // последовательная версия
+    for (const Document& document: search_server.FindTopDocuments("curly nasty cat"s)) {
+        PrintDocument(document);
+    }
+    cout << "BANNED:"s << endl;
+    // последовательная версия
+    for (const Document& document: search_server.FindTopDocuments(execution::seq, "curly nasty cat"s,
+                                                                  DocumentStatus::BANNED)) {
+        PrintDocument(document);
+    }
+
+    cout << "Even ids:"s << endl;
+    // параллельная версия
+    for (const Document& document: search_server.FindTopDocuments(execution::par, "curly nasty cat"s,
+                                                                  [](int document_id, DocumentStatus status,
+                                                                     int rating) { return document_id % 2 == 0; })) {
+        PrintDocument(document);
+    }
+
+    return 0;
+}*/
+
+/*int main() {
     mt19937 generator;
 
     const auto dictionary = GenerateDictionary(generator, 1000, 10);
@@ -85,7 +156,7 @@ int main() {
 
     TEST(seq);
     TEST(par);
-}
+}*/
 
 /*#include "search_server.h"
 
