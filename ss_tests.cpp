@@ -4,7 +4,6 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
-#include <string_view>
 #include <vector>
 #include <numeric>
 #include <cmath>
@@ -207,7 +206,7 @@ void TestGetWordFrequencies() {
     const string content0 = "young cat in the city"s;
     const vector<int> ratings0 = {1, 1, 1};
     {
-        SearchServer server("in the"sv);
+        SearchServer server("in the"s);
         ASSERT_EQUAL(server.GetDocumentCount(), 0);
         const map<string_view, double> got_word_freqs = server.GetWordFrequencies(doc0_id);
         ASSERT_HINT(got_word_freqs.empty(),
@@ -233,7 +232,7 @@ void TestRemoveDocument() {
     const vector<int> ratings0 = {1, 1, 1};
     const int invalid_id = 21;
     {
-        SearchServer server("in the"sv);
+        SearchServer server("in the"s);
         ASSERT_EQUAL(server.GetDocumentCount(), 0);
         server.AddDocument(doc0_id, content0, DocumentStatus::ACTUAL, ratings0);
         ASSERT_EQUAL(server.GetDocumentCount(), 1);
@@ -250,7 +249,7 @@ void TestRemoveDocument() {
                     "Failed to remove document. Check document ID deletion from word_to_document_freqs_ in RemoveDocument method."s);
     }
     try {
-        SearchServer server("in the"sv);
+        SearchServer server("in the"s);
         ASSERT_EQUAL(server.GetDocumentCount(), 0);
         server.AddDocument(doc0_id, content0, DocumentStatus::ACTUAL, ratings0);
         ASSERT_EQUAL(server.GetDocumentCount(), 1);
@@ -278,7 +277,7 @@ void TestExcludeStopWordsFromAddedDocumentContent() {
     // Затем убеждаемся, что поиск этого же слова, входящего в список стоп-слов,
     // возвращает пустой результат
     {
-        SearchServer server("in the"sv);
+        SearchServer server("in the"s);
         server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
         ASSERT_HINT(server.FindTopDocuments("in"s).empty(), "Check stop words setting algorithm"s);
     }
@@ -357,7 +356,7 @@ void TestMatchDocument() {
         ASSERT_EQUAL(matched_words[4], "white"s);
     }
     {
-        SearchServer server("in the"sv);
+        SearchServer server("in the"s);
         server.AddDocument(doc0_id, content0, DocumentStatus::ACTUAL, ratings0);
         const auto [matched_words, status] = server.MatchDocument("young white cat in the city"s, 42);
         ASSERT_EQUAL_HINT(matched_words.size(), 3, "Stop words in result. Check stop words filtering"s);
@@ -385,7 +384,7 @@ void TestRelevanceSorting() {
     const string content2 = "dog in the city"s;
     const vector<int> ratings2 = {1, 1, 1};
     {
-        SearchServer server("in the"sv);
+        SearchServer server("in the"s);
         server.AddDocument(doc0_id, content0, DocumentStatus::ACTUAL, ratings0);
         server.AddDocument(doc1_id, content1, DocumentStatus::ACTUAL, ratings1);
         server.AddDocument(doc2_id, content2, DocumentStatus::ACTUAL, ratings2);
@@ -506,7 +505,7 @@ void TestRelevanceCalculation() {
     const string content2 = "young parrot in the city"s;
     const vector<int> ratings2 = {2, 2, 3};
     {
-        SearchServer server("in the"sv);
+        SearchServer server("in the"s);
         server.AddDocument(doc0_id, content0, DocumentStatus::ACTUAL, ratings0);
         server.AddDocument(doc1_id, content1, DocumentStatus::ACTUAL, ratings1);
         server.AddDocument(doc2_id, content2, DocumentStatus::ACTUAL, ratings2);

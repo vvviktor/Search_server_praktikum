@@ -23,12 +23,10 @@ class SearchServer {
 public:
     SearchServer() = default; // Этот конструктор был нужен для удобства тестирования.
 
-    template<typename StringContainer>
+    template<typename StringContainer, typename = std::enable_if_t<!std::is_same_v<std::decay_t<StringContainer>, std::string>>>
     explicit SearchServer(const StringContainer& stop_words);
 
     explicit SearchServer(std::string_view stop_words_text);
-
-    explicit SearchServer(const std::string& stop_words_text);
 
     void AddDocument(int document_id, std::string_view document, DocumentStatus status,
                      const std::vector<int>& ratings);
@@ -109,7 +107,7 @@ private:
     std::vector<Document> FindAllDocuments(const Query& query, DocumentPredicate document_predicate) const;
 };
 
-template<typename StringContainer>
+template<typename StringContainer, typename>
 SearchServer::SearchServer(const StringContainer& stop_words)
         : stop_words_(MakeUniqueNonEmptyStrings(stop_words)) {
 

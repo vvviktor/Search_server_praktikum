@@ -7,10 +7,6 @@ SearchServer::SearchServer(string_view stop_words_text)
         : SearchServer(SplitIntoWords(stop_words_text)) {
 }
 
-SearchServer::SearchServer(const string& stop_words_text)
-        : SearchServer(SplitIntoWords(stop_words_text)) {
-}
-
 void SearchServer::AddDocument(int document_id, string_view document, DocumentStatus status,
                                const vector<int>& ratings) {
 
