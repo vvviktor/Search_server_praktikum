@@ -18,70 +18,10 @@
 #include "document.h"
 #include "string_processing.h"
 #include "log_duration.h"
+#include "concurrent_map.h"
 
 static const int MAX_RESULT_DOCUMENT_COUNT = 5;
 static const double EPSILON = 1e-6;
-
-template<typename Key, typename Value>
-class ConcurrentMap {
-public:
-    //static_assert(std::is_integral_v<Key>, "ConcurrentMap supports only integer keys"s);
-
-    struct Access {
-        std::lock_guard<std::mutex> l;
-        Value& ref_to_value;
-    };
-
-    explicit ConcurrentMap(size_t bucket_count) : map_array_(bucket_count),
-                                                  m_vector_(bucket_count),
-                                                  arr_size_(bucket_count) {
-    }
-
-    explicit ConcurrentMap(const std::map<Key, Value>& solid, size_t bucket_count) {
-        ConcurrentMap temp(bucket_count);
-
-        for (const auto& [key, val]: solid) {
-            temp[key].ref_to_value = val;
-        }
-
-        Swap(temp);
-    }
-
-    Access operator[](const Key& key) {
-        const int index = key % arr_size_;
-
-        return {std::lock_guard(m_vector_[index]), map_array_[index][key]};
-    }
-
-    void Erase(const Key& key) {
-        const int index = key % arr_size_;
-        std::lock_guard l(m_vector_[index]);
-        map_array_[index].erase(key);
-    }
-
-    std::map<Key, Value> BuildOrdinaryMap() {
-        std::map<Key, Value> ret_map;
-
-        for (size_t i = 0; i < arr_size_; ++i) {
-            std::lock_guard l(m_vector_[i]);
-            std::map<Key, Value> temp(map_array_[i].begin(), map_array_[i].end());
-            ret_map.merge(move(temp));
-        }
-
-        return ret_map;
-    }
-
-private:
-    std::vector<std::map<Key, Value>> map_array_;
-    std::vector<std::mutex> m_vector_;
-    size_t arr_size_;
-
-    void Swap(ConcurrentMap& other) {
-        std::swap(map_array_, other.map_array_);
-        std::swap(m_vector_, other.m_vector_);
-        std::swap(arr_size_, other.arr_size_);
-    }
-};
 
 class SearchServer {
 public:
