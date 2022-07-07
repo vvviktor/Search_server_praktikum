@@ -11,7 +11,7 @@ vector<vector<Document>> ProcessQueries(
     return ret;
 }
 
-/*list<Document> ProcessQueriesJoined(const SearchServer& search_server,
+list<Document> ProcessQueriesJoined(const SearchServer& search_server,
                                     const std::vector<std::string>& queries) {
     list<Document> ret;
     for (const auto& docs: ProcessQueries(search_server, queries)) {
@@ -27,9 +27,9 @@ vector<vector<Document>> ProcessQueries(
     }
     ret.reverse();
     return ret;
-}*/
+}
 
-list<Document> ProcessQueriesJoined(const SearchServer& search_server,
+/*list<Document> ProcessQueriesJoined(const SearchServer& search_server,
                                     const std::vector<std::string>& queries) {
     vector<list<Document>> temp_result(queries.size());
     list<Document> final_result;
@@ -45,4 +45,4 @@ list<Document> ProcessQueriesJoined(const SearchServer& search_server,
         final_result.splice(final_result.end(), list);
     }
     return final_result;
-}
+}*/
