@@ -7,7 +7,7 @@ vector<vector<Document>> ProcessQueries(
         const vector<string>& queries) {
     vector<vector<Document>> ret(queries.size());
     transform(execution::par, queries.begin(), queries.end(), ret.begin(),
-              [&search_server](const string& str) { return search_server.FindTopDocuments(str); });
+              [&search_server](string_view str) { return search_server.FindTopDocuments(str); });
     return ret;
 }
 
@@ -39,9 +39,9 @@ list<Document> ProcessQueriesJoined(const SearchServer& search_server,
                                     const std::vector<std::string>& queries) {
     vector<list<Document>> temp_result(queries.size());
     list<Document> final_result;
-    const auto tr = [&search_server](const string& str) {
+    const auto tr = [&search_server](string_view str) {
         list<Document> temp;
-        for (auto doc: search_server.FindTopDocuments(str)) {
+        for (const auto& doc: search_server.FindTopDocuments(str)) {
             temp.emplace_back(doc);
         }
         return temp;

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <execution>
+#include <string>
+#include <string_view>
 #include <vector>
 #include <list>
 #include <algorithm>
