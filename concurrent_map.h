@@ -54,7 +54,7 @@ ConcurrentMap<Key, Value>::ConcurrentMap(const std::map<Key, Value>& solid, size
 
 template<typename Key, typename Value>
 ConcurrentMap<Key, Value>::ConcurrentMap(const std::map<Key, Value>& solid) {
-    ConcurrentMap temp(solid.size() / 10);
+    ConcurrentMap temp(solid.size() / 3);
 
     for (const auto& [key, val]: solid) {
         temp[key].ref_to_value = val;

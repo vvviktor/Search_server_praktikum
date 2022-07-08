@@ -337,7 +337,7 @@ template<typename ExecutionPolicy, typename DocumentPredicate>
 std::vector<Document>
 SearchServer::FindAllDocuments(ExecutionPolicy&& policy, const Query& query,
                                DocumentPredicate document_predicate) const {
-    ConcurrentMap<int, double> document_to_relevance_par(5000);
+    ConcurrentMap<int, double> document_to_relevance_par(7000);
     ConcurrentMap<int, DocumentData> documents_par(documents_);
     const auto func_plus = [this, &document_predicate, &document_to_relevance_par, &documents_par](
             std::string_view word) {
