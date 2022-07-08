@@ -19,6 +19,8 @@ public:
 
     explicit ConcurrentMap(const std::map<Key, Value>& solid, size_t bucket_count);
 
+    explicit ConcurrentMap(const std::map<Key, Value>& solid);
+
     Access operator[](const Key& key);
 
     void Erase(const Key& key);
@@ -42,6 +44,17 @@ ConcurrentMap<Key, Value>::ConcurrentMap(size_t bucket_count) : map_array_(bucke
 template<typename Key, typename Value>
 ConcurrentMap<Key, Value>::ConcurrentMap(const std::map<Key, Value>& solid, size_t bucket_count) {
     ConcurrentMap temp(bucket_count);
+
+    for (const auto& [key, val]: solid) {
+        temp[key].ref_to_value = std::move(val);
+    }
+
+    Swap(temp);
+}
+
+template<typename Key, typename Value>
+ConcurrentMap<Key, Value>::ConcurrentMap(const std::map<Key, Value>& solid) {
+    ConcurrentMap temp(solid.size() / 10);
 
     for (const auto& [key, val]: solid) {
         temp[key].ref_to_value = val;

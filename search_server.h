@@ -27,7 +27,8 @@ class SearchServer {
 public:
     SearchServer() = default; // Этот конструктор был нужен для удобства тестирования.
 
-    template<typename StringContainer, typename = std::enable_if_t<!std::is_same_v<std::decay_t<StringContainer>, std::string>>>
+    template<typename StringContainer, typename = std::enable_if_t<!std::is_same_v<std::decay_t<StringContainer>,
+            std::string>>>
     explicit SearchServer(const StringContainer& stop_words);
 
     explicit SearchServer(std::string_view stop_words_text);
@@ -172,7 +173,7 @@ SearchServer::FindTopDocuments(ExecutionPolicy&& policy, std::string_view raw_qu
     const Query query = ParseQuery(raw_query);
     auto matched_documents = FindAllDocuments(std::forward<ExecutionPolicy>(policy), query, document_predicate);
 
-    sort(std::execution::par, matched_documents.begin(), matched_documents.end(),
+    sort(std::forward<ExecutionPolicy>(policy), matched_documents.begin(), matched_documents.end(),
          [](const Document& lhs, const Document& rhs) {
              if (std::abs(lhs.relevance - rhs.relevance) < EPSILON) {
                  return lhs.rating > rhs.rating;
@@ -313,7 +314,7 @@ void ForEach(ExecutionPolicy&& policy, ForwardRange& range, Function function) {
         return;
     }
 
-    const size_t MAX_PARTS_NUMBER = 4;
+    const size_t MAX_PARTS_NUMBER = 6;
     size_t part_size = range.size() / MAX_PARTS_NUMBER;
     auto part_begin = range.begin();
     auto part_end = next(part_begin, part_size);
@@ -337,7 +338,7 @@ std::vector<Document>
 SearchServer::FindAllDocuments(ExecutionPolicy&& policy, const Query& query,
                                DocumentPredicate document_predicate) const {
     ConcurrentMap<int, double> document_to_relevance_par(5000);
-    ConcurrentMap<int, DocumentData> documents_par(documents_, 5000);
+    ConcurrentMap<int, DocumentData> documents_par(documents_);
     const auto func_plus = [this, &document_predicate, &document_to_relevance_par, &documents_par](
             std::string_view word) {
         if (word_to_document_freqs_.count(word) == 0) {
@@ -355,7 +356,7 @@ SearchServer::FindAllDocuments(ExecutionPolicy&& policy, const Query& query,
         std::for_each(word_to_document_freqs_.at(word).begin(), word_to_document_freqs_.at(word).end(), f);
     };
 
-    ForEach(std::execution::par, query.plus_words, func_plus);
+    ForEach(std::forward<ExecutionPolicy>(policy), query.plus_words, func_plus);
 
     const auto func_minus = [this, &document_to_relevance_par](std::string_view word) {
         if (word_to_document_freqs_.count(word) == 0) {
@@ -366,14 +367,14 @@ SearchServer::FindAllDocuments(ExecutionPolicy&& policy, const Query& query,
         }
     };
 
-    ForEach(std::execution::par, query.minus_words, func_minus);
+    ForEach(std::forward<ExecutionPolicy>(policy), query.minus_words, func_minus);
 
     std::map<int, double> document_to_relevance = document_to_relevance_par.BuildOrdinaryMap();
 
     std::vector<Document> matched_documents(document_to_relevance.size());
     std::atomic_size_t index = 0;
 
-    ForEach(std::execution::par, document_to_relevance,
+    ForEach(std::forward<ExecutionPolicy>(policy), document_to_relevance,
             [&matched_documents, &documents_par, &index](const auto& doc_to_relevance) {
                 const auto [document_id, relevance] = doc_to_relevance;
                 matched_documents[index++] = {document_id, relevance, documents_par[document_id].ref_to_value.rating};
