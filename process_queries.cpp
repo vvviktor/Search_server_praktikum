@@ -6,8 +6,8 @@ vector<vector<Document>> ProcessQueries(
         const SearchServer& search_server,
         const vector<string>& queries) {
     vector<vector<Document>> ret(queries.size());
-    const auto f = [&search_server](const string& str) { return search_server.FindTopDocuments(str); };
-    transform(execution::par, queries.begin(), queries.end(), ret.begin(), f);
+    transform(execution::par, queries.begin(), queries.end(), ret.begin(),
+              [&search_server](const string& str) { return search_server.FindTopDocuments(str); });
     return ret;
 }
 
