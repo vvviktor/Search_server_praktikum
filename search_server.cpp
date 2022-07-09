@@ -205,6 +205,30 @@ SearchServer::QueryPar SearchServer::ParseQueryPar(string_view text) const {
     return query;
 }
 
+SearchServer::QueryPar SearchServer::ParseQueryParNoDuplicates(string_view text) const {
+    QueryPar query;
+
+    for (string_view word: SplitIntoWordsView(text)) {
+        const QueryWord query_word = ParseQueryWord(word);
+        if (!query_word.is_stop) {
+            if (query_word.is_minus) {
+                query.minus_words.emplace_back(query_word.data);
+            } else {
+                query.plus_words.emplace_back(query_word.data);
+            }
+        }
+    }
+
+    sort(execution::par, query.plus_words.begin(), query.plus_words.end());
+    query.plus_words.erase(unique(execution::par, query.plus_words.begin(), query.plus_words.end()),
+                           query.plus_words.end());
+    sort(execution::par, query.minus_words.begin(), query.minus_words.end());
+    query.minus_words.erase(unique(execution::par, query.minus_words.begin(), query.minus_words.end()),
+                            query.minus_words.end());
+
+    return query;
+}
+
 double SearchServer::ComputeWordInverseDocumentFreq(string_view word) const {
     return log(GetDocumentCount() * 1.0 / word_to_document_freqs_.at(word).size());
 }
