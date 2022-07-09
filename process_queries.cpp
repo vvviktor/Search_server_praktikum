@@ -47,7 +47,7 @@ list<Document> ProcessQueriesJoined(const SearchServer& search_server,
         return temp;
     };
     transform(execution::par, queries.begin(), queries.end(), temp_result.begin(), tr);
-    for (auto list: temp_result) {
+    for (auto& list: temp_result) {
         final_result.splice(final_result.end(), list);
     }
     return final_result;
