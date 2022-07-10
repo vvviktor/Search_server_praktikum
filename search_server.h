@@ -305,7 +305,7 @@ SearchServer::FindAllDocuments(const Query& query, DocumentPredicate document_pr
     return matched_documents;
 }
 
-template<typename ExecutionPolicy, typename DocumentPredicate>
+/*template<typename ExecutionPolicy, typename DocumentPredicate>
 std::vector<Document>
 SearchServer::FindAllDocuments(ExecutionPolicy&& policy, const QueryPar& query,
                                DocumentPredicate document_predicate) const {
@@ -348,9 +348,9 @@ SearchServer::FindAllDocuments(ExecutionPolicy&& policy, const QueryPar& query,
                   });
 
     return matched_documents;
-}
+}*/
 
-/*template<typename ExecutionPolicy, typename DocumentPredicate>
+template<typename ExecutionPolicy, typename DocumentPredicate>
 std::vector<Document>
 SearchServer::FindAllDocuments(ExecutionPolicy&& policy, const QueryPar& query,
                                DocumentPredicate document_predicate) const {
@@ -398,4 +398,4 @@ SearchServer::FindAllDocuments(ExecutionPolicy&& policy, const QueryPar& query,
                   });
 
     return matched_documents;
-}*/
+}
