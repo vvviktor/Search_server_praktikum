@@ -310,6 +310,7 @@ std::vector<Document>
 SearchServer::FindAllDocuments(ExecutionPolicy&& policy, const QueryPar& query,
                                DocumentPredicate document_predicate) const {
     ConcurrentMap<int, double> document_to_relevance_par(7000);
+
     const auto func_plus = [this, &query, &document_predicate, &document_to_relevance_par](
             std::string_view word) {
         if (!word_to_document_freqs_.count(word)) {
