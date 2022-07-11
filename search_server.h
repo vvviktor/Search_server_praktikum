@@ -13,7 +13,6 @@
 #include <type_traits>
 #include <cassert>
 #include <future>
-#include <atomic>
 
 #include "document.h"
 #include "string_processing.h"
