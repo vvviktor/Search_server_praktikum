@@ -341,7 +341,6 @@ SearchServer::FindAllDocuments(ExecutionPolicy&& policy, const QueryPar& query,
                   func_minus);
 
     std::map<int, double> document_to_relevance = document_to_relevance_par.BuildOrdinaryMap();
-
     std::vector<Document> matched_documents;
 
     for (const auto [document_id, relevance]: document_to_relevance) {
