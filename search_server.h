@@ -12,7 +12,6 @@
 #include <execution>
 #include <type_traits>
 #include <cassert>
-#include <future>
 
 #include "document.h"
 #include "string_processing.h"

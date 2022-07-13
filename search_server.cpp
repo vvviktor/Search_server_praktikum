@@ -21,8 +21,7 @@ void SearchServer::AddDocument(int document_id, string_view document, DocumentSt
 
     for (string_view word: words) {
         document_to_word_freqs_[document_id][string(word)] += inv_word_count;
-        const auto it = document_to_word_freqs_[document_id].find(word);
-        word_to_document_freqs_[it->first][document_id] += inv_word_count;
+        word_to_document_freqs_[document_to_word_freqs_[document_id].find(word)->first][document_id] += inv_word_count;
     }
 
     documents_.emplace(document_id, DocumentData{ComputeAverageRating(ratings), status});
